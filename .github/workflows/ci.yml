@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verificar que no hay peticiones de red en el bundle
+        run: |
+          if grep -rInE "fetch\(|XMLHttpRequest|new WebSocket|sendBeacon" dist/assets; then
+            echo "::error::El bundle contiene primitivas de red. Jsonium no hace peticiones."
+            exit 1
+          fi
