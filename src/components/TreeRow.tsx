@@ -7,9 +7,11 @@ interface TreeRowProps {
   row: Row;
   isExpanded: boolean;
   onToggle: (node: NodeSummary) => void;
+  onCopyPath: (node: NodeSummary) => void;
+  onCopyValue: (node: NodeSummary) => void;
 }
 
-export function TreeRow({ row, isExpanded, onToggle }: TreeRowProps) {
+export function TreeRow({ row, isExpanded, onToggle, onCopyPath, onCopyValue }: TreeRowProps) {
   const { node, depth } = row;
   const isBranch = node.childCount > 0;
 
@@ -18,6 +20,7 @@ export function TreeRow({ row, isExpanded, onToggle }: TreeRowProps) {
       className="row"
       role="treeitem"
       aria-level={depth + 1}
+      aria-selected={false}
       aria-expanded={isBranch ? isExpanded : undefined}
       style={{ paddingLeft: `${(depth * INDENT_PX).toString()}px` }}
     >
@@ -34,13 +37,31 @@ export function TreeRow({ row, isExpanded, onToggle }: TreeRowProps) {
       </button>
       <span className="row__label">{labelOf(node)}</span>
       <span className={`row__preview row__preview--${node.kind}`}>{node.preview}</span>
+      <span className="row__actions">
+        <button
+          type="button"
+          onClick={() => {
+            onCopyPath(node);
+          }}
+        >
+          ruta
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            onCopyValue(node);
+          }}
+        >
+          valor
+        </button>
+      </span>
     </div>
   );
 }
 
 function branchMarker(isBranch: boolean, isExpanded: boolean): string {
-  if (!isBranch) return '\u00b7';
-  return isExpanded ? '\u25be' : '\u25b8';
+  if (!isBranch) return '·';
+  return isExpanded ? '▾' : '▸';
 }
 
 function labelOf(node: NodeSummary): string {

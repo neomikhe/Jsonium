@@ -7,9 +7,11 @@ interface JsonTreeProps {
   rows: readonly Row[];
   expanded: ReadonlySet<NodeId>;
   onToggle: (node: NodeSummary) => void;
+  onCopyPath: (node: NodeSummary) => void;
+  onCopyValue: (node: NodeSummary) => void;
 }
 
-export function JsonTree({ rows, expanded, onToggle }: JsonTreeProps) {
+export function JsonTree({ rows, expanded, onToggle, onCopyPath, onCopyValue }: JsonTreeProps) {
   return (
     <VList className="tree" role="tree" aria-label="Arbol del documento">
       {rows.map((row) => (
@@ -18,6 +20,8 @@ export function JsonTree({ rows, expanded, onToggle }: JsonTreeProps) {
           row={row}
           isExpanded={expanded.has(row.node.id)}
           onToggle={onToggle}
+          onCopyPath={onCopyPath}
+          onCopyValue={onCopyValue}
         />
       ))}
     </VList>

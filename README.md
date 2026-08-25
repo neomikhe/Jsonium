@@ -26,8 +26,9 @@ Reproduce them yourself with `npm run bench` — the fixture generator is in `be
 
 | Operation | Chrome (Web Worker) | Node 24 |
 | --- | ---: | ---: |
-| `JSON.parse` of 100 MB | **309 ms** | 789 ms |
+| `JSON.parse` of 100 MB | **300–347 ms** | 789 ms |
 | Full document scan (6.4 M nodes) | **384 ms** | 294 ms |
+| Text search across 100 MB (200 hits) | **32 ms** | — |
 | First tree render | instant (virtualized) | — |
 | Heap after parse | — | 285 MB |
 
@@ -35,7 +36,8 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Production bundle (gzip) | **67 kB** |
+| Initial bundle (gzip) | **69.5 kB** |
+| Editor chunk (gzip, loaded lazily) | 102.6 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
 
@@ -53,22 +55,32 @@ Other numbers that matter:
 
 ## What works today
 
-- Drag & drop or pick a local JSON file (100 MB+ handled comfortably)
-- Parsing in a Web Worker — the UI never freezes
-- Virtualized tree with lazy expansion, paged 200 children at a time
-- Document statistics: node count, max depth, type histogram
-- Iterative traversal throughout, so deeply nested documents cannot blow the stack
+- **Open** a local JSON file by drag & drop, or paste JSON straight into the editor
+- **Editor** (CodeMirror 6) with JSON syntax highlighting, folding and bracket matching
+- **Format, minify and sort keys**, all computed in the worker
+- **Repair near-valid JSON** — trailing commas, single and smart quotes, unquoted keys,
+  `//` and `/* */` comments, and `True` / `False` / `None` / `NaN` / `undefined` — with a
+  breakdown of every fix applied
+- **Virtualized tree** with lazy expansion, paged 200 children at a time
+- **Copy the JSONPath or the value** of any node
+- **Search** keys and values across the whole document, with JSONPath results
+- **Document statistics**: node count, max depth, scan time
+- Iterative traversal everywhere, so deeply nested documents cannot blow the stack
   (tested to 200,000 levels)
+
+Above 5 MB the editor steps aside — keeping 100 MB of text in the main thread would freeze the
+tab — and the tree becomes the way to navigate the document.
 
 ## Roadmap
 
-| Phase | Scope |
-| --- | --- |
-| 1 | CodeMirror 6 editor, format / minify / sort keys, near-valid JSON repair, path search |
-| 2 | Semantic diff between two documents, JSON ↔ YAML / CSV / TOML conversion |
-| 3 | Offline PWA, keyboard shortcuts, reproducible benchmarks, v0.1.0 release |
-| 4 | jq (WASM) and JSONPath playground, JSON Schema validation and inference |
-| 5 | Type generation (TypeScript, Go, Rust, Python…), mock generation, URL sharing via `#fragment` |
+| Phase | Scope | Status |
+| --- | --- | --- |
+| 1 | Editor, format / minify / sort keys, JSON repair, tree search, copy path | ✅ done |
+| 1 | Document tabs with IndexedDB persistence | in progress |
+| 2 | Semantic diff between two documents, JSON ↔ YAML / CSV / TOML conversion | planned |
+| 3 | Offline PWA, keyboard shortcuts, v0.1.0 release | planned |
+| 4 | jq (WASM) and JSONPath playground, JSON Schema validation and inference | planned |
+| 5 | Type generation (TypeScript, Go, Rust, Python…), mocks, URL sharing via `#fragment` | planned |
 
 ## Getting started
 
@@ -105,7 +117,7 @@ The document is parsed once inside the worker and never serialized back. The UI 
 summaries of the nodes currently on screen, which is what makes a 100 MB file feel the same as a
 1 kB one.
 
-Stack: Vite · React 19 · TypeScript (strict) · Web Workers · [virtua](https://github.com/inokawa/virtua)
+Stack: Vite · React 19 · TypeScript (strict) · Web Workers · CodeMirror 6 · [virtua](https://github.com/inokawa/virtua)
 
 ## License
 
@@ -138,14 +150,16 @@ Reprodúcelo con `npm run bench`.
 
 | Operación | Chrome (Web Worker) | Node 24 |
 | --- | ---: | ---: |
-| `JSON.parse` de 100 MB | **309 ms** | 789 ms |
+| `JSON.parse` de 100 MB | **300–347 ms** | 789 ms |
 | Recorrido completo (6,4 M nodos) | **384 ms** | 294 ms |
+| Búsqueda de texto en 100 MB (200 aciertos) | **32 ms** | — |
 | Primer render del árbol | instantáneo (virtualizado) | — |
 | Heap tras el parse | — | 285 MB |
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle de producción (gzip) | **67 kB** |
+| Bundle inicial (gzip) | **69,5 kB** |
+| Chunk del editor (gzip, carga perezosa) | 102,6 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
 
@@ -160,12 +174,21 @@ Reprodúcelo con `npm run bench`.
 
 ## Qué funciona hoy
 
-- Arrastrar y soltar (o elegir) un archivo JSON local; 100 MB se manejan con soltura
-- Parseo en Web Worker: la interfaz nunca se congela
-- Árbol virtualizado con expansión perezosa, paginado de 200 hijos
-- Estadísticas del documento: número de nodos, profundidad máxima, histograma de tipos
+- **Abrir** un archivo JSON local arrastrándolo, o pegar JSON directamente en el editor
+- **Editor** (CodeMirror 6) con resaltado, plegado y emparejado de llaves
+- **Formatear, minificar y ordenar claves**, todo calculado en el worker
+- **Reparar JSON casi válido**: comas finales, comillas simples y tipográficas, claves sin comillas,
+  comentarios `//` y `/* */`, y `True` / `False` / `None` / `NaN` / `undefined`, con el desglose de
+  cada corrección aplicada
+- **Árbol virtualizado** con expansión perezosa, paginado de 200 hijos
+- **Copiar la ruta JSONPath o el valor** de cualquier nodo
+- **Buscar** por clave y valor en todo el documento, con las rutas de cada coincidencia
+- **Estadísticas**: número de nodos, profundidad máxima, tiempo de recorrido
 - Recorridos iterativos en todo el núcleo: el anidamiento profundo no desborda la pila
   (probado con 200.000 niveles)
+
+Por encima de 5 MB el editor se aparta —mantener 100 MB de texto en el hilo principal congelaría la
+pestaña— y el árbol pasa a ser la forma de navegar el documento.
 
 ## Empezar
 

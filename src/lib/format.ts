@@ -1,4 +1,5 @@
-const BYTES_PER_UNIT = 1024;
+import { BYTES_PER_UNIT } from '../core/limits';
+
 const UNITS = ['B', 'KB', 'MB', 'GB'] as const;
 const MS_PER_SECOND = 1000;
 const DECIMALS = 1;

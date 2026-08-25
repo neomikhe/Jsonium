@@ -3,6 +3,10 @@ import type { JsonKind } from './types';
 const PREVIEW_MAX_LENGTH = 48;
 const ELLIPSIS = '\u2026';
 
+export function isArrayValue(value: unknown): value is readonly unknown[] {
+  return Array.isArray(value);
+}
+
 export function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

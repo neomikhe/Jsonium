@@ -1,4 +1,7 @@
 import type { WorkerRequest, WorkerResponse } from '../core/protocol';
+import type { RepairResult } from '../core/repair';
+import type { SearchResult } from '../core/search';
+import type { SerializeOptions } from '../core/serialize';
 import type { DocumentStats, NodeId, NodeSummary, ParseResult } from '../core/types';
 import ParseWorker from '../workers/parse.worker?worker';
 
@@ -29,6 +32,26 @@ export class DocumentClient {
 
   children(nodeId: NodeId, offset: number, limit: number): Promise<NodeSummary[]> {
     return this.send<NodeSummary[]>((id) => ({ id, type: 'children', nodeId, offset, limit }));
+  }
+
+  serialize(options: SerializeOptions): Promise<string> {
+    return this.send<string>((id) => ({ id, type: 'serialize', options }));
+  }
+
+  repair(text: string): Promise<RepairResult> {
+    return this.send<RepairResult>((id) => ({ id, type: 'repair', text }));
+  }
+
+  path(nodeId: NodeId): Promise<string> {
+    return this.send<string>((id) => ({ id, type: 'path', nodeId }));
+  }
+
+  value(nodeId: NodeId): Promise<string> {
+    return this.send<string>((id) => ({ id, type: 'value', nodeId }));
+  }
+
+  search(query: string, limit: number): Promise<SearchResult> {
+    return this.send<SearchResult>((id) => ({ id, type: 'search', query, limit }));
   }
 
   stats(): Promise<DocumentStats> {

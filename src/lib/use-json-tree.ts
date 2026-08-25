@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CHILDREN_PAGE_SIZE } from '../core/limits';
 import type { NodeId, NodeSummary } from '../core/types';
 import type { DocumentClient } from './document-client';
 import { flattenRows } from './tree-rows';
 import type { TreeRow } from './tree-rows';
-
-const CHILDREN_PAGE_SIZE = 200;
 
 interface JsonTreeState {
   rows: TreeRow[];
