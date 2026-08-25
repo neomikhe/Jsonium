@@ -1,3 +1,4 @@
+import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import type { DiffOptions, DiffResult } from '../core/diff';
 import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import type { RepairResult } from '../core/repair';
@@ -69,6 +70,14 @@ export class DocumentClient {
 
   diff(options: DiffOptions): Promise<DiffResult> {
     return this.send<DiffResult>((id) => ({ id, type: 'diff', options }));
+  }
+
+  convert(format: ConvertFormat): Promise<ConvertOutput> {
+    return this.send<ConvertOutput>((id) => ({ id, type: 'convert', format }));
+  }
+
+  importFile(file: File, format: ConvertFormat): Promise<ParseResult> {
+    return this.send<ParseResult>((id) => ({ id, type: 'importFile', file, format }));
   }
 
   stats(): Promise<DocumentStats> {

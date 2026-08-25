@@ -1,14 +1,16 @@
+import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import type { DiffResult } from '../core/diff';
 import type { SearchResult } from '../core/search';
 import type { NodeId, NodeSummary } from '../core/types';
 import type { TreeRow } from '../lib/tree-rows';
 import type { DocumentStatus } from '../lib/use-document';
+import { ConvertPanel } from './ConvertPanel';
 import { DiffPanel } from './DiffPanel';
 import { DropZone } from './DropZone';
 import { JsonTree } from './JsonTree';
 import { SearchPanel } from './SearchPanel';
 
-export type PaneMode = 'tree' | 'diff';
+export type PaneMode = 'tree' | 'diff' | 'convert';
 
 export interface SearchBinding {
   query: string;
@@ -29,6 +31,14 @@ export interface DiffBinding {
   clear: () => void;
 }
 
+export interface ConvertBinding {
+  format: ConvertFormat;
+  output: ConvertOutput | null;
+  error: string | null;
+  isRunning: boolean;
+  setFormat: (format: ConvertFormat) => void;
+}
+
 export interface NodeActionBinding {
   onToggle: (node: NodeSummary) => void;
   onCopyPath: (node: NodeSummary) => void;
@@ -43,6 +53,7 @@ interface DocumentPaneProps {
   expanded: ReadonlySet<NodeId>;
   search: SearchBinding;
   diff: DiffBinding;
+  convert: ConvertBinding;
   actions: NodeActionBinding;
   mode: PaneMode;
   onModeChange: (mode: PaneMode) => void;
@@ -50,7 +61,8 @@ interface DocumentPaneProps {
 }
 
 export function DocumentPane(props: DocumentPaneProps) {
-  const { status, rows, expanded, search, diff, actions, mode, onModeChange, onFile } = props;
+  const { status, rows, expanded, search, diff, convert, actions, mode, onModeChange, onFile } =
+    props;
 
   if (status.state === 'empty') return <DropZone onFile={onFile} />;
   if (status.state === 'loading') return <p className="notice">Parseando {status.name}...</p>;
@@ -67,9 +79,23 @@ export function DocumentPane(props: DocumentPaneProps) {
       <div className="modes" role="tablist" aria-label="Vista del documento">
         <ModeButton mode="tree" current={mode} label="Arbol" onSelect={onModeChange} />
         <ModeButton mode="diff" current={mode} label="Diff" onSelect={onModeChange} />
+        <ModeButton mode="convert" current={mode} label="Convertir" onSelect={onModeChange} />
       </div>
 
-      {mode === 'diff' ? (
+      {mode === 'convert' && (
+        <ConvertPanel
+          format={convert.format}
+          output={convert.output}
+          error={convert.error}
+          isRunning={convert.isRunning}
+          onFormatChange={convert.setFormat}
+          onCopy={(text) => {
+            actions.onCopyText(text, 'Conversion copiada al portapapeles');
+          }}
+        />
+      )}
+
+      {mode === 'diff' && (
         <DiffPanel
           compareName={diff.compareName}
           arrayKey={diff.arrayKey}
@@ -80,7 +106,9 @@ export function DocumentPane(props: DocumentPaneProps) {
           onFile={diff.loadCompare}
           onClear={diff.clear}
         />
-      ) : (
+      )}
+
+      {mode === 'tree' && (
         <TreeView rows={rows} expanded={expanded} search={search} actions={actions} />
       )}
     </>

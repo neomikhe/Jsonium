@@ -16,6 +16,7 @@ import { useDocument } from './lib/use-document';
 import { useEditorText } from './lib/use-editor-text';
 import { useJsonTree } from './lib/use-json-tree';
 import { useNodeActions } from './lib/use-node-actions';
+import { useConvert } from './lib/use-convert';
 import { useDiff } from './lib/use-diff';
 import { useSearch } from './lib/use-search';
 import { useTabs } from './lib/use-tabs';
@@ -32,6 +33,7 @@ export function App() {
   const [reveal, setReveal] = useState<Span | null>(null);
   const [mode, setMode] = useState<PaneMode>('tree');
   const diffState = useDiff(client, status);
+  const convertState = useConvert(client, status, mode === 'convert');
 
   useEffect(() => {
     setStats(null);
@@ -154,6 +156,7 @@ export function App() {
             expanded={expanded}
             search={search}
             diff={diffState}
+            convert={convertState}
             mode={mode}
             onModeChange={setMode}
             actions={{

@@ -1,3 +1,4 @@
+import type { ConvertFormat, ConvertOutput } from './convert';
 import type { DiffOptions, DiffResult } from './diff';
 import type { RepairResult } from './repair';
 import type { SearchResult } from './search';
@@ -17,6 +18,8 @@ export type WorkerRequest =
   | { id: number; type: 'compareText'; text: string }
   | { id: number; type: 'clearCompare' }
   | { id: number; type: 'diff'; options: DiffOptions }
+  | { id: number; type: 'convert'; format: ConvertFormat }
+  | { id: number; type: 'importFile'; file: File; format: ConvertFormat }
   | { id: number; type: 'stats' };
 
 export interface CompareResult {
@@ -35,6 +38,8 @@ export type WorkerResponse =
   | { id: number; ok: true; type: 'compareFile' | 'compareText'; result: CompareResult }
   | { id: number; ok: true; type: 'clearCompare'; result: null }
   | { id: number; ok: true; type: 'diff'; result: DiffResult }
+  | { id: number; ok: true; type: 'convert'; result: ConvertOutput }
+  | { id: number; ok: true; type: 'importFile'; result: ParseResult }
   | { id: number; ok: true; type: 'stats'; result: DocumentStats }
   | { id: number; ok: false; error: string };
 
@@ -51,6 +56,8 @@ const REQUEST_TYPES: ReadonlySet<string> = new Set<RequestType>([
   'compareText',
   'clearCompare',
   'diff',
+  'convert',
+  'importFile',
   'stats',
 ]);
 

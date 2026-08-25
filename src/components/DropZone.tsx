@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { ACCEPTED_FILES } from '../core/file-format';
 import type { ChangeEvent, DragEvent } from 'react';
 
 interface DropZoneProps {
@@ -46,7 +47,7 @@ export function DropZone({ onFile, isCompact = false, label }: DropZoneProps) {
       {!isCompact && (
         <span className="dropzone__hint">o pulsa para elegirlo. Nada sale de tu equipo.</span>
       )}
-      <input type="file" accept="application/json,.json" onChange={handleSelect} />
+      <input type="file" accept={ACCEPTED_FILES} onChange={handleSelect} />
     </label>
   );
 }

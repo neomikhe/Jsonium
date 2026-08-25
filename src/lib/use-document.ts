@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { messageOf } from '../core/error-message';
+import { formatOfFile } from '../core/file-format';
 import type { ParseResult } from '../core/types';
 import { DocumentClient } from './document-client';
 
@@ -28,7 +29,9 @@ export function useDocument() {
     async (file: File) => {
       setStatus({ state: 'loading', name: file.name });
       try {
-        const result = await client.parseFile(file);
+        const format = formatOfFile(file.name);
+        const result =
+          format === null ? await client.parseFile(file) : await client.importFile(file, format);
         setStatus({ state: 'ready', name: file.name, origin: 'file', result });
       } catch (error) {
         setStatus({ state: 'failed', name: file.name, error: messageOf(error) });

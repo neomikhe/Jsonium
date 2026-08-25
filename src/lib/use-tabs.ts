@@ -49,8 +49,9 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
       openedRef.current = false;
       return;
     }
-    if (status.origin === 'file' || activeId === null) setActiveId(crypto.randomUUID());
-  }, [status, activeId]);
+    if (status.origin !== 'file' && activeId !== null) return;
+    setActiveId(idForName(entries, status.name) ?? crypto.randomUUID());
+  }, [status, activeId, entries]);
 
   const isPersisted = status.state === 'ready' && status.result.bytes <= PERSIST_MAX_BYTES;
 
@@ -104,4 +105,8 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
   }, [refresh]);
 
   return { entries, activeId, error, isPersisted, open, close, clearAll };
+}
+
+function idForName(entries: readonly DocumentEntry[], name: string): string | null {
+  return entries.find((entry) => entry.name === name)?.id ?? null;
 }

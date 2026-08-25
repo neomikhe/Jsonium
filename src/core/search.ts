@@ -1,7 +1,8 @@
 import type { PathLink } from './json-path';
 import { pathFrom } from './json-path';
-import { isArrayValue, isPlainRecord, kindOf, previewOf } from './json-value';
+import { kindOf, previewOf } from './json-value';
 import { pushReversed } from './stack';
+import { childFrames } from './walk';
 
 export type SearchWhere = 'key' | 'value';
 
@@ -71,20 +72,4 @@ function isScalar(value: unknown): boolean {
 
 function pushChildren(stack: Frame[], frame: Frame): void {
   pushReversed(stack, childFrames(frame));
-}
-
-function childFrames(frame: Frame): Frame[] {
-  const items = frame.value;
-  if (isArrayValue(items)) {
-    return items.map((item, index) => ({
-      value: item,
-      link: { parent: frame.link, key: null, index },
-    }));
-  }
-  if (!isPlainRecord(frame.value)) return [];
-  const record = frame.value;
-  return Object.keys(record).map((key) => ({
-    value: record[key],
-    link: { parent: frame.link, key, index: null },
-  }));
 }

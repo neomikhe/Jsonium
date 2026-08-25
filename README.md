@@ -36,7 +36,7 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **72.9 kB** |
+| Initial bundle (gzip) | **73.7 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
@@ -73,6 +73,9 @@ are never stored at all.
   text alike
 - **Search** keys and values across the whole document, with JSONPath results
 - **Document statistics**: node count, max depth, and a histogram of value types
+- **Convert to YAML, TOML or CSV** — and it tells you what each format silently loses: TOML has no
+  null, and CSV turns nested values into JSON text that comes back as a string
+- **Open YAML, TOML and CSV files** directly; they are converted to JSON on the way in
 - **Semantic diff** against a second document — arrays match by index, or by a key you name, so a
   reordered list stops drowning the real changes
 - **Recent documents** persisted in IndexedDB, so a reload does not lose your work
@@ -88,8 +91,9 @@ tab — and the tree becomes the way to navigate the document.
 | --- | --- | --- |
 | 1 | Editor, format / minify / sort keys, JSON repair, search, copy path, editor↔tree sync, tabs | ✅ done |
 | 2 | Semantic diff between two documents | ✅ done |
-| 2 | JSON ↔ YAML / CSV / TOML conversion, diff export | next |
-| 3 | Offline PWA, keyboard shortcuts, v0.1.0 release | planned |
+| 2 | JSON ↔ YAML / CSV / TOML conversion with loss warnings | ✅ done |
+| 3 | Offline PWA, keyboard shortcuts, v0.1.0 release | next |
+
 | 4 | jq (WASM) and JSONPath playground, JSON Schema validation and inference | planned |
 | 5 | Type generation (TypeScript, Go, Rust, Python…), mocks, URL sharing via `#fragment` | planned |
 
@@ -128,7 +132,7 @@ The document is parsed once inside the worker and never serialized back. The UI 
 summaries of the nodes currently on screen, which is what makes a 100 MB file feel the same as a
 1 kB one.
 
-Stack: Vite · React 19 · TypeScript (strict) · Web Workers · CodeMirror 6 · [virtua](https://github.com/inokawa/virtua)
+Stack: Vite · React 19 · TypeScript (strict) · Web Workers · CodeMirror 6 · [virtua](https://github.com/inokawa/virtua) · js-yaml · smol-toml
 
 ## License
 
@@ -169,7 +173,7 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **72,9 kB** |
+| Bundle inicial (gzip) | **73,7 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
@@ -203,6 +207,9 @@ de 5 MB no se guarda nada.
   formateado como minificado
 - **Buscar** por clave y valor en todo el documento, con las rutas de cada coincidencia
 - **Estadísticas**: número de nodos, profundidad máxima e histograma de tipos
+- **Convertir a YAML, TOML o CSV**, avisando de lo que cada formato pierde en silencio: TOML no
+  tiene null, y CSV convierte lo anidado en texto JSON que vuelve como cadena
+- **Abrir archivos YAML, TOML y CSV** directamente: se convierten a JSON al entrar
 - **Diff semántico** contra un segundo documento: los arrays se emparejan por índice, o por la
   clave que indiques, de modo que reordenar una lista deje de tapar los cambios reales
 - **Documentos recientes** guardados en IndexedDB: recargar no pierde el trabajo

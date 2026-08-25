@@ -12,4 +12,5 @@ export const SEARCH_MAX_RESULTS = 200;
 export const PERSIST_MAX_BYTES = PERSIST_MAX_MB * BYTES_PER_MB;
 export const MAX_TABS = 8;
 export const DIFF_MAX_CHANGES = 500;
+export const CONVERT_PREVIEW_CHARS = 100000;
 export const INDENT_SPACES = 2;

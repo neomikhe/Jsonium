@@ -1,4 +1,6 @@
 import { childrenOf } from '../core/children';
+import { analyzeConversion } from '../core/convert';
+import type { ConvertOutput } from '../core/convert';
 import { diff } from '../core/diff';
 import { messageOf } from '../core/error-message';
 import { COPY_MAX_CHARS, EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
@@ -27,6 +29,8 @@ type ChildrenRequest = Extract<WorkerRequest, { type: 'children' }>;
 type SerializeRequest = Extract<WorkerRequest, { type: 'serialize' }>;
 type SearchRequest = Extract<WorkerRequest, { type: 'search' }>;
 type DiffRequest = Extract<WorkerRequest, { type: 'diff' }>;
+type ConvertRequest = Extract<WorkerRequest, { type: 'convert' }>;
+type ImportRequest = Extract<WorkerRequest, { type: 'importFile' }>;
 
 // lib.dom no describe el scope de un worker: se acota a lo que realmente usamos
 const scope = globalThis as unknown as WorkerScope;
@@ -47,18 +51,34 @@ function parseTimed(slot: Slot, text: string, sizeBytes: number): number {
 
 function parseMain(text: string, sizeBytes: number): ParseResult {
   const parseMs = parseTimed(main, text, sizeBytes);
+  return { ...adoptMain(main.value, sizeBytes), parseMs };
+}
+
+function adoptMain(value: unknown, sizeBytes: number): ParseResult {
+  main.value = value;
+  main.bytes = sizeBytes;
+  main.isLoaded = true;
   registry.clear();
-  const rootId = registry.register({
-    value: main.value,
-    parentId: null,
-    key: null,
-    index: null,
-  });
-  return {
-    root: summarize({ key: null, index: null, value: main.value }, rootId),
-    parseMs,
-    bytes: sizeBytes,
-  };
+  const rootId = registry.register({ value, parentId: null, key: null, index: null });
+  return { root: summarize({ key: null, index: null, value }, rootId), parseMs: 0, bytes: sizeBytes };
+}
+
+// js-yaml, smol-toml y papaparse suman ~50 kB: solo se cargan al convertir
+async function runConvert(request: ConvertRequest): Promise<ConvertOutput> {
+  const value = requireMain();
+  const losses = analyzeConversion(value, request.format);
+  const { toFormat } = await import('../core/convert-run');
+  try {
+    return { text: toFormat(value, request.format), losses, failure: null };
+  } catch (cause) {
+    return { text: '', losses, failure: messageOf(cause) };
+  }
+}
+
+async function runImport(request: ImportRequest): Promise<ParseResult> {
+  const text = await request.file.text();
+  const { fromFormat } = await import('../core/convert-run');
+  return adoptMain(fromFormat(text, request.format), request.file.size);
 }
 
 function parseCompare(text: string, sizeBytes: number): CompareResult {
@@ -160,6 +180,10 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'value', result: serializeNode(request.nodeId) };
     case 'search':
       return { id, ok: true, type: 'search', result: runSearch(request) };
+    case 'convert':
+      return { id, ok: true, type: 'convert', result: await runConvert(request) };
+    case 'importFile':
+      return { id, ok: true, type: 'importFile', result: await runImport(request) };
     case 'stats':
       return { id, ok: true, type: 'stats', result: computeStats(requireMain()) };
   }

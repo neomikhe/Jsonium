@@ -840,3 +840,66 @@ body {
 .hit__where--changed {
   color: var(--kind-number);
 }
+
+.convert__bar {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--space) / 2);
+}
+
+.convert__copy {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.8rem;
+}
+
+.convert__output {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: var(--space);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.losses {
+  flex-shrink: 0;
+  padding: calc(var(--space) / 1.5) var(--space);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  font-size: 0.75rem;
+}
+
+.losses__title {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.losses__list {
+  max-height: 8rem;
+  overflow-y: auto;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+}
+
+.losses__path {
+  color: var(--text);
+  font-weight: 600;
+}
