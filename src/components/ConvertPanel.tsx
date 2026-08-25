@@ -11,10 +11,11 @@ interface ConvertPanelProps {
   isRunning: boolean;
   onFormatChange: (format: ConvertFormat) => void;
   onCopy: (text: string) => void;
+  onDownload: (text: string, format: ConvertFormat) => void;
 }
 
 export function ConvertPanel(props: ConvertPanelProps) {
-  const { format, output, error, isRunning, onFormatChange, onCopy } = props;
+  const { format, output, error, isRunning, onFormatChange, onCopy, onDownload } = props;
 
   return (
     <>
@@ -40,6 +41,17 @@ export function ConvertPanel(props: ConvertPanelProps) {
             }}
           >
             Copiar
+          </button>
+        )}
+        {output !== null && output.text !== '' && (
+          <button
+            type="button"
+            className="convert__copy"
+            onClick={() => {
+              onDownload(output.text, format);
+            }}
+          >
+            Descargar
           </button>
         )}
       </div>

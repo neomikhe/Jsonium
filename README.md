@@ -76,6 +76,7 @@ are never stored at all.
 - **Convert to YAML, TOML or CSV** — and it tells you what each format silently loses: TOML has no
   null, and CSV turns nested values into JSON text that comes back as a string
 - **Open YAML, TOML and CSV files** directly; they are converted to JSON on the way in
+- **Export the diff** as JSON, and click any change to jump to it in the editor
 - **Semantic diff** against a second document — arrays match by index, or by a key you name, so a
   reordered list stops drowning the real changes
 - **Recent documents** persisted in IndexedDB, so a reload does not lose your work
@@ -91,7 +92,7 @@ tab — and the tree becomes the way to navigate the document.
 | --- | --- | --- |
 | 1 | Editor, format / minify / sort keys, JSON repair, search, copy path, editor↔tree sync, tabs | ✅ done |
 | 2 | Semantic diff between two documents | ✅ done |
-| 2 | JSON ↔ YAML / CSV / TOML conversion with loss warnings | ✅ done |
+| 2 | JSON ↔ YAML / CSV / TOML conversion with loss warnings, diff export | ✅ done |
 | 3 | Offline PWA, keyboard shortcuts, v0.1.0 release | next |
 
 | 4 | jq (WASM) and JSONPath playground, JSON Schema validation and inference | planned |
@@ -210,6 +211,7 @@ de 5 MB no se guarda nada.
 - **Convertir a YAML, TOML o CSV**, avisando de lo que cada formato pierde en silencio: TOML no
   tiene null, y CSV convierte lo anidado en texto JSON que vuelve como cadena
 - **Abrir archivos YAML, TOML y CSV** directamente: se convierten a JSON al entrar
+- **Exportar el diff** como JSON, y pulsar cualquier cambio para saltar a él en el editor
 - **Diff semántico** contra un segundo documento: los arrays se emparejan por índice, o por la
   clave que indiques, de modo que reordenar una lista deje de tapar los cambios reales
 - **Documentos recientes** guardados en IndexedDB: recargar no pierde el trabajo

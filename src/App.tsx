@@ -8,10 +8,13 @@ import { StatusBar } from './components/StatusBar';
 import { Tabs } from './components/Tabs';
 import { Toolbar } from './components/Toolbar';
 import { EDITOR_MAX_BYTES, INDENT_SPACES } from './core/limits';
+import type { ConvertFormat } from './core/convert';
+import type { DiffResult } from './core/diff';
 import { locatePath } from './core/locate';
 import type { Span } from './core/locate';
 import type { DocumentStats, NodeSummary } from './core/types';
 import { formatBytes } from './lib/format';
+import { downloadText } from './lib/download';
 import { useDocument } from './lib/use-document';
 import { useEditorText } from './lib/use-editor-text';
 import { useJsonTree } from './lib/use-json-tree';
@@ -57,20 +60,33 @@ export function App() {
 
   const { applyOptions, loadText } = editor;
 
+  const revealPath = useCallback(
+    (path: string) => {
+      if (!editor.isEditable) return;
+      setReveal(locatePath(editor.text, path));
+    },
+    [editor.isEditable, editor.text],
+  );
+
   const revealNode = useCallback(
     (node: NodeSummary) => {
-      if (!editor.isEditable) return;
       void client
         .path(node.id)
-        .then((path) => {
-          setReveal(locatePath(editor.text, path));
-        })
+        .then(revealPath)
         .catch(() => {
           setReveal(null);
         });
     },
-    [client, editor.isEditable, editor.text],
+    [client, revealPath],
   );
+
+  const exportDiff = useCallback((result: DiffResult) => {
+    downloadText(JSON.stringify(result, null, INDENT_SPACES), 'jsonium-diff.json');
+  }, []);
+
+  const downloadConversion = useCallback((text: string, format: ConvertFormat) => {
+    downloadText(text, `jsonium.${format}`);
+  }, []);
 
   const openTab = useCallback(
     (id: string) => {
@@ -167,6 +183,9 @@ export function App() {
               onReveal: revealNode,
             }}
             onFile={handleFile}
+            onRevealPath={revealPath}
+            onExportDiff={exportDiff}
+            onDownload={downloadConversion}
           />
         </section>
       </main>

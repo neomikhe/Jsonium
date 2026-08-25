@@ -18,11 +18,13 @@ interface DiffPanelProps {
   onArrayKeyChange: (key: string) => void;
   onFile: (file: File) => void;
   onClear: () => void;
+  onReveal: (path: string) => void;
+  onExport: (result: DiffResult) => void;
 }
 
 export function DiffPanel(props: DiffPanelProps) {
-  const { compareName, arrayKey, result, error, isRunning, onArrayKeyChange, onFile, onClear } =
-    props;
+  const { compareName, arrayKey, result, error, isRunning } = props;
+  const { onArrayKeyChange, onFile, onClear, onReveal, onExport } = props;
 
   if (compareName === null) {
     return <DropZone onFile={onFile} label="Suelta el documento con el que comparar" />;
@@ -45,6 +47,17 @@ export function DiffPanel(props: DiffPanelProps) {
             }}
           />
         </label>
+        {result !== null && result.changes.length > 0 && (
+          <button
+            type="button"
+            className="diff__clear"
+            onClick={() => {
+              onExport(result);
+            }}
+          >
+            Exportar
+          </button>
+        )}
         <button type="button" className="diff__clear" onClick={onClear}>
           Quitar
         </button>
@@ -52,12 +65,17 @@ export function DiffPanel(props: DiffPanelProps) {
 
       {error !== null && <p className="notice notice--error">{error}</p>}
       {isRunning && <p className="notice">Comparando...</p>}
-      {result !== null && !isRunning && <DiffChanges result={result} />}
+      {result !== null && !isRunning && <DiffChanges result={result} onReveal={onReveal} />}
     </>
   );
 }
 
-function DiffChanges({ result }: { result: DiffResult }) {
+interface DiffChangesProps {
+  result: DiffResult;
+  onReveal: (path: string) => void;
+}
+
+function DiffChanges({ result, onReveal }: DiffChangesProps) {
   if (result.changes.length === 0) {
     return <p className="notice">Los dos documentos son iguales.</p>;
   }
@@ -79,13 +97,21 @@ function DiffChanges({ result }: { result: DiffResult }) {
       </p>
       <VList className="tree" role="list" aria-label="Cambios entre documentos">
         {result.changes.map((change) => (
-          <div key={`${change.kind}:${change.path}`} className={`hit change--${change.kind}`}>
+          <button
+            key={`${change.kind}:${change.path}`}
+            type="button"
+            className="hit"
+            title="Mostrar en el editor"
+            onClick={() => {
+              onReveal(change.path);
+            }}
+          >
             <span className={`hit__where hit__where--${change.kind}`}>
               {KIND_LABELS[change.kind]}
             </span>
             <span className="hit__path">{change.path}</span>
             <span className="hit__preview">{describe(change)}</span>
-          </div>
+          </button>
         ))}
       </VList>
     </>

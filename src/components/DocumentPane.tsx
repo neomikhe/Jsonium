@@ -58,11 +58,14 @@ interface DocumentPaneProps {
   mode: PaneMode;
   onModeChange: (mode: PaneMode) => void;
   onFile: (file: File) => void;
+  onRevealPath: (path: string) => void;
+  onExportDiff: (result: DiffResult) => void;
+  onDownload: (text: string, format: ConvertFormat) => void;
 }
 
 export function DocumentPane(props: DocumentPaneProps) {
-  const { status, rows, expanded, search, diff, convert, actions, mode, onModeChange, onFile } =
-    props;
+  const { status, rows, expanded, search, diff, convert, actions, mode } = props;
+  const { onModeChange, onFile, onRevealPath, onExportDiff, onDownload } = props;
 
   if (status.state === 'empty') return <DropZone onFile={onFile} />;
   if (status.state === 'loading') return <p className="notice">Parseando {status.name}...</p>;
@@ -92,6 +95,7 @@ export function DocumentPane(props: DocumentPaneProps) {
           onCopy={(text) => {
             actions.onCopyText(text, 'Conversion copiada al portapapeles');
           }}
+          onDownload={onDownload}
         />
       )}
 
@@ -105,6 +109,8 @@ export function DocumentPane(props: DocumentPaneProps) {
           onArrayKeyChange={diff.setArrayKey}
           onFile={diff.loadCompare}
           onClear={diff.clear}
+          onReveal={onRevealPath}
+          onExport={onExportDiff}
         />
       )}
 

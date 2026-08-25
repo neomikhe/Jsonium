@@ -79,6 +79,7 @@ export function Editor({ text, isEditable, reveal, onChange }: EditorProps) {
       effects: EditorView.scrollIntoView(from, { y: 'center' }),
       annotations: Programmatic.of(true),
     });
+    view.focus();
   }, [reveal]);
 
   return <div className="editor" ref={hostRef} />;
