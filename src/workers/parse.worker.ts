@@ -1,9 +1,10 @@
 import { childrenOf } from '../core/children';
+import { diff } from '../core/diff';
 import { messageOf } from '../core/error-message';
 import { COPY_MAX_CHARS, EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
 import { NodeRegistry } from '../core/node-registry';
 import { isWorkerRequest } from '../core/protocol';
-import type { WorkerRequest, WorkerResponse } from '../core/protocol';
+import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import { repair } from '../core/repair';
 import { search } from '../core/search';
 import { serialize } from '../core/serialize';
@@ -16,36 +17,52 @@ interface WorkerScope {
   onmessage: ((event: MessageEvent<unknown>) => void) | null;
 }
 
+interface Slot {
+  value: unknown;
+  bytes: number;
+  isLoaded: boolean;
+}
+
 type ChildrenRequest = Extract<WorkerRequest, { type: 'children' }>;
 type SerializeRequest = Extract<WorkerRequest, { type: 'serialize' }>;
 type SearchRequest = Extract<WorkerRequest, { type: 'search' }>;
+type DiffRequest = Extract<WorkerRequest, { type: 'diff' }>;
 
 // lib.dom no describe el scope de un worker: se acota a lo que realmente usamos
 const scope = globalThis as unknown as WorkerScope;
 
 const registry = new NodeRegistry();
-let activeDocument: unknown = null;
-let documentBytes = 0;
-let isLoaded = false;
+const main: Slot = { value: null, bytes: 0, isLoaded: false };
+const compare: Slot = { value: null, bytes: 0, isLoaded: false };
 
-function parseJson(text: string, sizeBytes: number): ParseResult {
+function parseTimed(slot: Slot, text: string, sizeBytes: number): number {
   const startedAt = performance.now();
-  activeDocument = JSON.parse(text);
+  const value: unknown = JSON.parse(text);
   const parseMs = performance.now() - startedAt;
-  isLoaded = true;
-  documentBytes = sizeBytes;
+  slot.value = value;
+  slot.bytes = sizeBytes;
+  slot.isLoaded = true;
+  return parseMs;
+}
+
+function parseMain(text: string, sizeBytes: number): ParseResult {
+  const parseMs = parseTimed(main, text, sizeBytes);
   registry.clear();
   const rootId = registry.register({
-    value: activeDocument,
+    value: main.value,
     parentId: null,
     key: null,
     index: null,
   });
   return {
-    root: summarize({ key: null, index: null, value: activeDocument }, rootId),
+    root: summarize({ key: null, index: null, value: main.value }, rootId),
     parseMs,
     bytes: sizeBytes,
   };
+}
+
+function parseCompare(text: string, sizeBytes: number): CompareResult {
+  return { parseMs: parseTimed(compare, text, sizeBytes), bytes: sizeBytes };
 }
 
 function readChildren(request: ChildrenRequest): NodeSummary[] {
@@ -64,20 +81,36 @@ function readChildren(request: ChildrenRequest): NodeSummary[] {
 }
 
 function serializeDocument(request: SerializeRequest): string {
-  const document = requireDocument();
-  if (documentBytes > EDITOR_MAX_BYTES) {
+  const document = requireMain();
+  if (main.bytes > EDITOR_MAX_BYTES) {
     throw new Error('Documento demasiado grande para serializar en el editor');
   }
   return serialize(document, request.options);
 }
 
 function serializeNode(nodeId: NodeId): string {
-  const value = requireNode(nodeId);
-  return serialize(value, {
+  return serialize(requireNode(nodeId), {
     indent: INDENT_SPACES,
     sortKeys: false,
     maxLength: COPY_MAX_CHARS,
   });
+}
+
+function runSearch(request: SearchRequest): ReturnType<typeof search> {
+  return search(requireMain(), { query: request.query, limit: request.limit });
+}
+
+function runDiff(request: DiffRequest): ReturnType<typeof diff> {
+  const left = requireMain();
+  if (!compare.isLoaded) throw new Error('Falta el documento con el que comparar');
+  return diff(left, compare.value, request.options);
+}
+
+function clearCompare(): null {
+  compare.value = null;
+  compare.bytes = 0;
+  compare.isLoaded = false;
+  return null;
 }
 
 function requireNode(nodeId: NodeId): unknown {
@@ -85,29 +118,36 @@ function requireNode(nodeId: NodeId): unknown {
   return registry.read(nodeId);
 }
 
-function requireDocument(): unknown {
-  if (!isLoaded) throw new Error('No hay documento cargado');
-  return activeDocument;
+function requireMain(): unknown {
+  if (!main.isLoaded) throw new Error('No hay documento cargado');
+  return main.value;
 }
 
-function runSearch(request: SearchRequest): ReturnType<typeof search> {
-  return search(requireDocument(), { query: request.query, limit: request.limit });
-}
-
+// eslint-disable-next-line complexity -- despacho del protocolo: partirlo perderia la exhaustividad del switch
 async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
   const { id } = request;
   switch (request.type) {
     case 'parseFile': {
       const text = await request.file.text();
-      return { id, ok: true, type: 'parseFile', result: parseJson(text, request.file.size) };
+      return { id, ok: true, type: 'parseFile', result: parseMain(text, request.file.size) };
     }
     case 'parseText':
+      return { id, ok: true, type: 'parseText', result: parseMain(request.text, request.text.length) };
+    case 'compareFile': {
+      const text = await request.file.text();
+      return { id, ok: true, type: 'compareFile', result: parseCompare(text, request.file.size) };
+    }
+    case 'compareText':
       return {
         id,
         ok: true,
-        type: 'parseText',
-        result: parseJson(request.text, request.text.length),
+        type: 'compareText',
+        result: parseCompare(request.text, request.text.length),
       };
+    case 'clearCompare':
+      return { id, ok: true, type: 'clearCompare', result: clearCompare() };
+    case 'diff':
+      return { id, ok: true, type: 'diff', result: runDiff(request) };
     case 'children':
       return { id, ok: true, type: 'children', result: readChildren(request) };
     case 'serialize':
@@ -121,7 +161,7 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
     case 'search':
       return { id, ok: true, type: 'search', result: runSearch(request) };
     case 'stats':
-      return { id, ok: true, type: 'stats', result: computeStats(requireDocument()) };
+      return { id, ok: true, type: 'stats', result: computeStats(requireMain()) };
   }
 }
 

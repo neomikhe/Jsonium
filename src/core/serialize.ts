@@ -1,4 +1,5 @@
 import { isPlainRecord } from './json-value';
+import { pushReversed } from './stack';
 
 export interface SerializeOptions {
   indent: number;
@@ -87,10 +88,6 @@ function sortedKeys(record: Record<string, unknown>, options: SerializeOptions):
 function gap(depth: number, options: SerializeOptions): string {
   if (options.indent === 0) return '';
   return `\n${' '.repeat(depth * options.indent)}`;
-}
-
-function pushReversed(stack: Emit[], emits: readonly Emit[]): void {
-  for (const emit of emits.toReversed()) stack.push(emit);
 }
 
 function raw(text: string): Emit {

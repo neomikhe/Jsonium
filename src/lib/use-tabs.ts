@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { messageOf } from '../core/error-message';
 import { PERSIST_MAX_BYTES } from '../core/limits';
+import type { ParseResult } from '../core/types';
 import type { DocumentEntry, StoredDocument } from './document-store';
 import {
   clearDocuments,
@@ -28,6 +29,7 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const openedRef = useRef(false);
+  const lastResultRef = useRef<ParseResult | null>(null);
 
   const refresh = useCallback(() => {
     void listDocuments()
@@ -41,9 +43,13 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
 
   useEffect(() => {
     if (status.state !== 'ready') return;
-    const needsNewTab = status.origin === 'file' || activeId === null;
-    if (needsNewTab && !openedRef.current) setActiveId(crypto.randomUUID());
-    openedRef.current = false;
+    if (status.result === lastResultRef.current) return;
+    lastResultRef.current = status.result;
+    if (openedRef.current) {
+      openedRef.current = false;
+      return;
+    }
+    if (status.origin === 'file' || activeId === null) setActiveId(crypto.randomUUID());
   }, [status, activeId]);
 
   const isPersisted = status.state === 'ready' && status.result.bytes <= PERSIST_MAX_BYTES;

@@ -1,4 +1,5 @@
-import type { WorkerRequest, WorkerResponse } from '../core/protocol';
+import type { DiffOptions, DiffResult } from '../core/diff';
+import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import type { RepairResult } from '../core/repair';
 import type { SearchResult } from '../core/search';
 import type { SerializeOptions } from '../core/serialize';
@@ -52,6 +53,22 @@ export class DocumentClient {
 
   search(query: string, limit: number): Promise<SearchResult> {
     return this.send<SearchResult>((id) => ({ id, type: 'search', query, limit }));
+  }
+
+  compareFile(file: File): Promise<CompareResult> {
+    return this.send<CompareResult>((id) => ({ id, type: 'compareFile', file }));
+  }
+
+  compareText(text: string): Promise<CompareResult> {
+    return this.send<CompareResult>((id) => ({ id, type: 'compareText', text }));
+  }
+
+  clearCompare(): Promise<null> {
+    return this.send<null>((id) => ({ id, type: 'clearCompare' }));
+  }
+
+  diff(options: DiffOptions): Promise<DiffResult> {
+    return this.send<DiffResult>((id) => ({ id, type: 'diff', options }));
   }
 
   stats(): Promise<DocumentStats> {

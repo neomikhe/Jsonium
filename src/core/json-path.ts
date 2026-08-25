@@ -6,6 +6,7 @@ export interface PathLink {
   parent: PathLink | null;
   key: string | null;
   index: number | null;
+  token?: string;
 }
 
 export function segmentOf(key: string | null, index: number | null): string {
@@ -18,7 +19,7 @@ export function pathFrom(link: PathLink | null): string {
   const segments: string[] = [];
   let current = link;
   while (current !== null) {
-    segments.push(segmentOf(current.key, current.index));
+    segments.push(current.token ?? segmentOf(current.key, current.index));
     current = current.parent;
   }
   return `${ROOT_PATH}${segments.toReversed().join('')}`;

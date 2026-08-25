@@ -4,9 +4,10 @@ import type { ChangeEvent, DragEvent } from 'react';
 interface DropZoneProps {
   onFile: (file: File) => void;
   isCompact?: boolean;
+  label?: string;
 }
 
-export function DropZone({ onFile, isCompact = false }: DropZoneProps) {
+export function DropZone({ onFile, isCompact = false, label }: DropZoneProps) {
   const [isOver, setIsOver] = useState(false);
 
   const handleDrop = useCallback(
@@ -40,7 +41,7 @@ export function DropZone({ onFile, isCompact = false }: DropZoneProps) {
       onDrop={handleDrop}
     >
       <span className="dropzone__title">
-        {isCompact ? 'Abrir otro documento' : 'Suelta un archivo JSON'}
+        {label ?? (isCompact ? 'Abrir otro documento' : 'Suelta un archivo JSON')}
       </span>
       {!isCompact && (
         <span className="dropzone__hint">o pulsa para elegirlo. Nada sale de tu equipo.</span>

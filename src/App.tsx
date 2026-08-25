@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DocumentPane } from './components/DocumentPane';
+import type { PaneMode } from './components/DocumentPane';
 import { DropZone } from './components/DropZone';
 import { EditorPane } from './components/EditorPane';
 import { StatsPanel } from './components/StatsPanel';
@@ -15,6 +16,7 @@ import { useDocument } from './lib/use-document';
 import { useEditorText } from './lib/use-editor-text';
 import { useJsonTree } from './lib/use-json-tree';
 import { useNodeActions } from './lib/use-node-actions';
+import { useDiff } from './lib/use-diff';
 import { useSearch } from './lib/use-search';
 import { useTabs } from './lib/use-tabs';
 
@@ -28,6 +30,8 @@ export function App() {
   const [stats, setStats] = useState<DocumentStats | null>(null);
   const tabs = useTabs(status, editor.text);
   const [reveal, setReveal] = useState<Span | null>(null);
+  const [mode, setMode] = useState<PaneMode>('tree');
+  const diffState = useDiff(client, status);
 
   useEffect(() => {
     setStats(null);
@@ -149,6 +153,9 @@ export function App() {
             rows={rows}
             expanded={expanded}
             search={search}
+            diff={diffState}
+            mode={mode}
+            onModeChange={setMode}
             actions={{
               onToggle: toggle,
               onCopyPath: copyPath,

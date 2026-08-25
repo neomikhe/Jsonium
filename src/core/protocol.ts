@@ -1,3 +1,4 @@
+import type { DiffOptions, DiffResult } from './diff';
 import type { RepairResult } from './repair';
 import type { SearchResult } from './search';
 import type { SerializeOptions } from './serialize';
@@ -12,7 +13,16 @@ export type WorkerRequest =
   | { id: number; type: 'path'; nodeId: NodeId }
   | { id: number; type: 'value'; nodeId: NodeId }
   | { id: number; type: 'search'; query: string; limit: number }
+  | { id: number; type: 'compareFile'; file: File }
+  | { id: number; type: 'compareText'; text: string }
+  | { id: number; type: 'clearCompare' }
+  | { id: number; type: 'diff'; options: DiffOptions }
   | { id: number; type: 'stats' };
+
+export interface CompareResult {
+  parseMs: number;
+  bytes: number;
+}
 
 export type RequestType = WorkerRequest['type'];
 
@@ -22,6 +32,9 @@ export type WorkerResponse =
   | { id: number; ok: true; type: 'serialize' | 'path' | 'value'; result: string }
   | { id: number; ok: true; type: 'repair'; result: RepairResult }
   | { id: number; ok: true; type: 'search'; result: SearchResult }
+  | { id: number; ok: true; type: 'compareFile' | 'compareText'; result: CompareResult }
+  | { id: number; ok: true; type: 'clearCompare'; result: null }
+  | { id: number; ok: true; type: 'diff'; result: DiffResult }
   | { id: number; ok: true; type: 'stats'; result: DocumentStats }
   | { id: number; ok: false; error: string };
 
@@ -34,6 +47,10 @@ const REQUEST_TYPES: ReadonlySet<string> = new Set<RequestType>([
   'path',
   'value',
   'search',
+  'compareFile',
+  'compareText',
+  'clearCompare',
+  'diff',
   'stats',
 ]);
 

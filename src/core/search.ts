@@ -1,6 +1,7 @@
 import type { PathLink } from './json-path';
 import { pathFrom } from './json-path';
 import { isArrayValue, isPlainRecord, kindOf, previewOf } from './json-value';
+import { pushReversed } from './stack';
 
 export type SearchWhere = 'key' | 'value';
 
@@ -69,7 +70,7 @@ function isScalar(value: unknown): boolean {
 }
 
 function pushChildren(stack: Frame[], frame: Frame): void {
-  for (const child of childFrames(frame).toReversed()) stack.push(child);
+  pushReversed(stack, childFrames(frame));
 }
 
 function childFrames(frame: Frame): Frame[] {
