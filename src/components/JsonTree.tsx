@@ -9,9 +9,11 @@ interface JsonTreeProps {
   onToggle: (node: NodeSummary) => void;
   onCopyPath: (node: NodeSummary) => void;
   onCopyValue: (node: NodeSummary) => void;
+  onReveal: (node: NodeSummary) => void;
 }
 
-export function JsonTree({ rows, expanded, onToggle, onCopyPath, onCopyValue }: JsonTreeProps) {
+export function JsonTree(props: JsonTreeProps) {
+  const { rows, expanded, onToggle, onCopyPath, onCopyValue, onReveal } = props;
   return (
     <VList className="tree" role="tree" aria-label="Arbol del documento">
       {rows.map((row) => (
@@ -22,6 +24,7 @@ export function JsonTree({ rows, expanded, onToggle, onCopyPath, onCopyValue }: 
           onToggle={onToggle}
           onCopyPath={onCopyPath}
           onCopyValue={onCopyValue}
+          onReveal={onReveal}
         />
       ))}
     </VList>

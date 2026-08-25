@@ -11,6 +11,7 @@ import { tags } from '@lezer/highlight';
 import { Annotation, EditorState } from '@codemirror/state';
 import { EditorView, highlightActiveLineGutter, keymap, lineNumbers } from '@codemirror/view';
 import { useEffect, useRef } from 'react';
+import type { Span } from '../core/locate';
 
 const Programmatic = Annotation.define<boolean>();
 
@@ -30,10 +31,11 @@ interface ChangeRef {
 interface EditorProps {
   text: string;
   isEditable: boolean;
+  reveal: Span | null;
   onChange: (text: string) => void;
 }
 
-export function Editor({ text, isEditable, onChange }: EditorProps) {
+export function Editor({ text, isEditable, reveal, onChange }: EditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const viewRef = useRef<EditorView | null>(null);
   const changeRef = useRef(onChange);
@@ -66,6 +68,18 @@ export function Editor({ text, isEditable, onChange }: EditorProps) {
       annotations: Programmatic.of(true),
     });
   }, [text]);
+
+  useEffect(() => {
+    const view = viewRef.current;
+    if (view === null || reveal === null) return;
+    const to = Math.min(reveal.to, view.state.doc.length);
+    const from = Math.min(reveal.from, to);
+    view.dispatch({
+      selection: { anchor: from, head: to },
+      effects: EditorView.scrollIntoView(from, { y: 'center' }),
+      annotations: Programmatic.of(true),
+    });
+  }, [reveal]);
 
   return <div className="editor" ref={hostRef} />;
 }

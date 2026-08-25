@@ -28,6 +28,7 @@ export interface NodeActionBinding {
   onCopyPath: (node: NodeSummary) => void;
   onCopyValue: (node: NodeSummary) => void;
   onCopyText: (text: string, message: string) => void;
+  onReveal: (node: NodeSummary) => void;
 }
 
 export function DocumentPane({
@@ -79,6 +80,7 @@ export function DocumentPane({
           onToggle={actions.onToggle}
           onCopyPath={actions.onCopyPath}
           onCopyValue={actions.onCopyValue}
+          onReveal={actions.onReveal}
         />
       )}
     </>

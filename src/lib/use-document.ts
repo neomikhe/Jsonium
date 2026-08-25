@@ -38,11 +38,11 @@ export function useDocument() {
   );
 
   const applyText = useCallback(
-    async (text: string) => {
+    async (text: string, name?: string) => {
       const result = await client.parseText(text);
       setStatus((current) => ({
         state: 'ready',
-        name: current.state === 'ready' ? current.name : PASTED_NAME,
+        name: name ?? (current.state === 'ready' ? current.name : PASTED_NAME),
         origin: 'editor',
         result,
       }));

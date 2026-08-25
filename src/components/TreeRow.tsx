@@ -9,9 +9,11 @@ interface TreeRowProps {
   onToggle: (node: NodeSummary) => void;
   onCopyPath: (node: NodeSummary) => void;
   onCopyValue: (node: NodeSummary) => void;
+  onReveal: (node: NodeSummary) => void;
 }
 
-export function TreeRow({ row, isExpanded, onToggle, onCopyPath, onCopyValue }: TreeRowProps) {
+export function TreeRow(props: TreeRowProps) {
+  const { row, isExpanded, onToggle, onCopyPath, onCopyValue, onReveal } = props;
   const { node, depth } = row;
   const isBranch = node.childCount > 0;
 
@@ -35,7 +37,16 @@ export function TreeRow({ row, isExpanded, onToggle, onCopyPath, onCopyValue }: 
       >
         {branchMarker(isBranch, isExpanded)}
       </button>
-      <span className="row__label">{labelOf(node)}</span>
+      <button
+        type="button"
+        className="row__label"
+        title="Mostrar en el editor"
+        onClick={() => {
+          onReveal(node);
+        }}
+      >
+        {labelOf(node)}
+      </button>
       <span className={`row__preview row__preview--${node.kind}`}>{node.preview}</span>
       <span className="row__actions">
         <button

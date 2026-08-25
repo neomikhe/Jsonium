@@ -15,6 +15,7 @@ interface EditorTextState {
   isEditable: boolean;
   canRepair: boolean;
   handleChange: (next: string) => void;
+  loadText: (next: string) => void;
   applyOptions: (options: SerializeOptions) => void;
   applyRepair: () => void;
 }
@@ -22,7 +23,7 @@ interface EditorTextState {
 export function useEditorText(
   client: DocumentClient,
   status: DocumentStatus,
-  applyText: (text: string) => Promise<void>,
+  applyText: (text: string, name?: string) => Promise<void>,
 ): EditorTextState {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +92,13 @@ export function useEditorText(
     [applyText],
   );
 
+  const loadText = useCallback((next: string) => {
+    setText(next);
+    setError(null);
+    setFixes([]);
+    if (timerRef.current !== null) clearTimeout(timerRef.current);
+  }, []);
+
   const canRepair = error !== null && isEditable && text.trim() !== '';
 
   return {
@@ -100,6 +108,7 @@ export function useEditorText(
     isEditable,
     canRepair,
     handleChange,
+    loadText,
     applyOptions,
     applyRepair,
   };

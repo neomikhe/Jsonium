@@ -36,8 +36,8 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **69.5 kB** |
-| Editor chunk (gzip, loaded lazily) | 102.6 kB |
+| Initial bundle (gzip) | **71.9 kB** |
+| Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
 
@@ -53,6 +53,12 @@ Other numbers that matter:
 - **One copy of your document.** The parsed document lives only inside the worker. The UI asks for
   small page-sized slices by node id and never receives the whole thing.
 
+One thing to be upfront about: recent documents up to 5 MB are kept in your browser's IndexedDB so
+they survive a reload. That is local storage on your own machine — it never syncs and never leaves
+the device — but it is stored unencrypted, so a payload with tokens in it stays on disk until you
+remove it. Every tab has a close button, **Borrar guardados** wipes the lot, and files above 5 MB
+are never stored at all.
+
 ## What works today
 
 - **Open** a local JSON file by drag & drop, or paste JSON straight into the editor
@@ -63,8 +69,11 @@ Other numbers that matter:
   breakdown of every fix applied
 - **Virtualized tree** with lazy expansion, paged 200 children at a time
 - **Copy the JSONPath or the value** of any node
+- **Click a node to reveal it in the editor** — it selects the exact span, in formatted or minified
+  text alike
 - **Search** keys and values across the whole document, with JSONPath results
-- **Document statistics**: node count, max depth, scan time
+- **Document statistics**: node count, max depth, and a histogram of value types
+- **Recent documents** persisted in IndexedDB, so a reload does not lose your work
 - Iterative traversal everywhere, so deeply nested documents cannot blow the stack
   (tested to 200,000 levels)
 
@@ -75,9 +84,8 @@ tab — and the tree becomes the way to navigate the document.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 1 | Editor, format / minify / sort keys, JSON repair, tree search, copy path | ✅ done |
-| 1 | Document tabs with IndexedDB persistence | in progress |
-| 2 | Semantic diff between two documents, JSON ↔ YAML / CSV / TOML conversion | planned |
+| 1 | Editor, format / minify / sort keys, JSON repair, search, copy path, editor↔tree sync, tabs | ✅ done |
+| 2 | Semantic diff between two documents, JSON ↔ YAML / CSV / TOML conversion | next |
 | 3 | Offline PWA, keyboard shortcuts, v0.1.0 release | planned |
 | 4 | jq (WASM) and JSONPath playground, JSON Schema validation and inference | planned |
 | 5 | Type generation (TypeScript, Go, Rust, Python…), mocks, URL sharing via `#fragment` | planned |
@@ -158,8 +166,8 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **69,5 kB** |
-| Chunk del editor (gzip, carga perezosa) | 102,6 kB |
+| Bundle inicial (gzip) | **71,9 kB** |
+| Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
 
@@ -172,6 +180,12 @@ Reprodúcelo con `npm run bench`.
 - **Lo impone el linter.** Esas primitivas son errores de ESLint en el código fuente.
 - **Una sola copia del documento.** El documento parseado vive únicamente en el worker.
 
+Un matiz que conviene decir claro: los documentos recientes de hasta 5 MB se guardan en el
+IndexedDB del navegador para sobrevivir a una recarga. Es almacenamiento local de tu equipo —no se
+sincroniza ni sale del dispositivo—, pero **sin cifrar**: un payload con tokens queda en disco
+hasta que lo borres. Cada pestaña tiene su aspa, **Borrar guardados** lo vacía todo, y por encima
+de 5 MB no se guarda nada.
+
 ## Qué funciona hoy
 
 - **Abrir** un archivo JSON local arrastrándolo, o pegar JSON directamente en el editor
@@ -182,8 +196,11 @@ Reprodúcelo con `npm run bench`.
   cada corrección aplicada
 - **Árbol virtualizado** con expansión perezosa, paginado de 200 hijos
 - **Copiar la ruta JSONPath o el valor** de cualquier nodo
+- **Pulsar un nodo para verlo en el editor**: selecciona el fragmento exacto, tanto en texto
+  formateado como minificado
 - **Buscar** por clave y valor en todo el documento, con las rutas de cada coincidencia
-- **Estadísticas**: número de nodos, profundidad máxima, tiempo de recorrido
+- **Estadísticas**: número de nodos, profundidad máxima e histograma de tipos
+- **Documentos recientes** guardados en IndexedDB: recargar no pierde el trabajo
 - Recorridos iterativos en todo el núcleo: el anidamiento profundo no desborda la pila
   (probado con 200.000 niveles)
 

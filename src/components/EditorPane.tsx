@@ -1,4 +1,5 @@
 import { Suspense, lazy } from 'react';
+import type { Span } from '../core/locate';
 import type { RepairFix } from '../core/repair';
 import { RepairSummary } from './RepairSummary';
 
@@ -10,15 +11,17 @@ interface EditorPaneProps {
   error: string | null;
   fixes: readonly RepairFix[];
   canRepair: boolean;
+  reveal: Span | null;
   onChange: (text: string) => void;
   onRepair: () => void;
 }
 
-export function EditorPane({ text, error, fixes, canRepair, onChange, onRepair }: EditorPaneProps) {
+export function EditorPane(props: EditorPaneProps) {
+  const { text, error, fixes, canRepair, reveal, onChange, onRepair } = props;
   return (
     <section className="pane">
       <Suspense fallback={<div className="editor editor--loading" />}>
-        <Editor text={text} isEditable onChange={onChange} />
+        <Editor text={text} isEditable reveal={reveal} onChange={onChange} />
       </Suspense>
 
       {error !== null && (
