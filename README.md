@@ -36,7 +36,7 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **73.7 kB** |
+| Initial bundle (gzip) | **74.1 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
@@ -48,7 +48,9 @@ Other numbers that matter:
   `default-src 'none'` and `connect-src 'none'`. The browser itself refuses to let the page open a
   connection, whatever the code tries to do.
 - **Enforced by CI.** The build fails if network primitives (`fetch`, `XMLHttpRequest`, `WebSocket`,
-  `sendBeacon`) appear anywhere in the bundle.
+  `sendBeacon`) appear anywhere in the application code, and if the service worker's precache list
+  points at any origin but your own. The one place `fetch` does exist is the Workbox runtime, because
+  serving from cache is precisely what a service worker does.
 - **Enforced by lint.** Those same primitives are ESLint errors in the source.
 - **One copy of your document.** The parsed document lives only inside the worker. The UI asks for
   small page-sized slices by node id and never receives the whole thing.
@@ -58,6 +60,25 @@ they survive a reload. That is local storage on your own machine — it never sy
 the device — but it is stored unencrypted, so a payload with tokens in it stays on disk until you
 remove it. Every tab has a close button, **Borrar guardados** wipes the lot, and files above 5 MB
 are never stored at all.
+
+## Why another JSON tool?
+
+An honest answer, because there are plenty already:
+
+| | Strong at | Where it falls short |
+| --- | --- | --- |
+| "json formatter online" sites | SEO — they are what you find first | Ads, your payload goes to a server, they choke on large files |
+| [jsoncrack](https://jsoncrack.com) | Graph visualisation, genuinely beautiful | Not a workbench: no semantic diff, no conversions |
+| [jqplay](https://jqplay.org) | jq, done well | jq only, and it needs a backend |
+| [it-tools](https://it-tools.tech) | Breadth — hundreds of small tools | No JSON depth: no semantic diff, no large files |
+| **Jsonium** | JSON depth, privacy, and size | Younger, and it has to earn its audience without SEO |
+
+If you only ever pretty-print small snippets, any of the above is fine and you do not need this. Jsonium
+earns its place when the file is large, the payload is sensitive, or you need diff, search, conversion
+and repair in one place instead of five tabs.
+
+What it is **not**: a graph visualiser, a jq playground (yet — that is phase 4), or a general-purpose
+"everything" toolbox.
 
 ## What works today
 
@@ -79,6 +100,9 @@ are never stored at all.
 - **Export the diff** as JSON, and click any change to jump to it in the editor
 - **Semantic diff** against a second document — arrays match by index, or by a key you name, so a
   reordered list stops drowning the real changes
+- **Works offline.** A service worker precaches the whole app, so it keeps running with the server
+  unreachable — verified by killing the server and reloading
+- **Keyboard shortcuts**: Ctrl/Cmd + Shift + F, M and O for format, minify and sort keys
 - **Recent documents** persisted in IndexedDB, so a reload does not lose your work
 - Iterative traversal everywhere, so deeply nested documents cannot blow the stack
   (tested to 200,000 levels)
@@ -93,8 +117,8 @@ tab — and the tree becomes the way to navigate the document.
 | 1 | Editor, format / minify / sort keys, JSON repair, search, copy path, editor↔tree sync, tabs | ✅ done |
 | 2 | Semantic diff between two documents | ✅ done |
 | 2 | JSON ↔ YAML / CSV / TOML conversion with loss warnings, diff export | ✅ done |
-| 3 | Offline PWA, keyboard shortcuts, v0.1.0 release | next |
-
+| 3 | Offline PWA, keyboard shortcuts | ✅ done |
+| 3 | v0.1.0 release | next |
 | 4 | jq (WASM) and JSONPath playground, JSON Schema validation and inference | planned |
 | 5 | Type generation (TypeScript, Go, Rust, Python…), mocks, URL sharing via `#fragment` | planned |
 
@@ -174,7 +198,7 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **73,7 kB** |
+| Bundle inicial (gzip) | **74,1 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
@@ -184,7 +208,9 @@ Reprodúcelo con `npm run bench`.
 - **Cero red.** Sin analítica, sin fuentes remotas, sin CDNs, sin telemetría.
 - **Lo impone el navegador.** El build de producción incluye una CSP estricta con
   `default-src 'none'` y `connect-src 'none'`.
-- **Lo impone la CI.** El build falla si aparecen primitivas de red en el bundle.
+- **Lo impone la CI.** El build falla si aparecen primitivas de red en el código de la aplicación, y
+  si el service worker precachea cualquier origen que no sea el tuyo. El único sitio donde `fetch`
+  existe es el runtime de Workbox: servir desde caché es justo lo que hace un service worker.
 - **Lo impone el linter.** Esas primitivas son errores de ESLint en el código fuente.
 - **Una sola copia del documento.** El documento parseado vive únicamente en el worker.
 
@@ -214,6 +240,9 @@ de 5 MB no se guarda nada.
 - **Exportar el diff** como JSON, y pulsar cualquier cambio para saltar a él en el editor
 - **Diff semántico** contra un segundo documento: los arrays se emparejan por índice, o por la
   clave que indiques, de modo que reordenar una lista deje de tapar los cambios reales
+- **Funciona sin conexión.** Un service worker precachea la aplicación entera, así que sigue
+  funcionando con el servidor caído: verificado apagándolo y recargando
+- **Atajos de teclado**: Ctrl/Cmd + Shift + F, M y O para formatear, minificar y ordenar claves
 - **Documentos recientes** guardados en IndexedDB: recargar no pierde el trabajo
 - Recorridos iterativos en todo el núcleo: el anidamiento profundo no desborda la pila
   (probado con 200.000 niveles)

@@ -22,6 +22,7 @@ import { useNodeActions } from './lib/use-node-actions';
 import { useConvert } from './lib/use-convert';
 import { useDiff } from './lib/use-diff';
 import { useSearch } from './lib/use-search';
+import { useShortcuts } from './lib/use-shortcuts';
 import { useTabs } from './lib/use-tabs';
 
 export function App() {
@@ -59,6 +60,25 @@ export function App() {
   );
 
   const { applyOptions, loadText } = editor;
+  const canEdit = status.state === 'ready' && editor.isEditable;
+
+  const format = useCallback(() => {
+    if (canEdit) applyOptions({ indent: INDENT_SPACES, sortKeys: false });
+  }, [canEdit, applyOptions]);
+
+  const minify = useCallback(() => {
+    if (canEdit) applyOptions({ indent: 0, sortKeys: false });
+  }, [canEdit, applyOptions]);
+
+  const sortKeys = useCallback(() => {
+    if (canEdit) applyOptions({ indent: INDENT_SPACES, sortKeys: true });
+  }, [canEdit, applyOptions]);
+
+  useShortcuts([
+    { key: 'f', run: format },
+    { key: 'm', run: minify },
+    { key: 'o', run: sortKeys },
+  ]);
 
   const revealPath = useCallback(
     (path: string) => {
@@ -121,18 +141,7 @@ export function App() {
         onClearAll={tabs.clearAll}
       />
 
-      <Toolbar
-        isDisabled={status.state !== 'ready' || !editor.isEditable}
-        onFormat={() => {
-          applyOptions({ indent: INDENT_SPACES, sortKeys: false });
-        }}
-        onMinify={() => {
-          applyOptions({ indent: 0, sortKeys: false });
-        }}
-        onSortKeys={() => {
-          applyOptions({ indent: INDENT_SPACES, sortKeys: true });
-        }}
-      />
+      <Toolbar isDisabled={!canEdit} onFormat={format} onMinify={minify} onSortKeys={sortKeys} />
 
       {status.state === 'ready' && (
         <StatusBar
@@ -160,7 +169,7 @@ export function App() {
             error={editor.error}
             fixes={editor.fixes}
             canRepair={editor.canRepair}
-          reveal={reveal}
+            reveal={reveal}
             onChange={editor.handleChange}
             onRepair={editor.applyRepair}
           />

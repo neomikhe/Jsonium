@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import type { Plugin } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
 
 const CONTENT_SECURITY_POLICY = [
@@ -16,6 +17,7 @@ const CONTENT_SECURITY_POLICY = [
 ].join('; ');
 
 const CHARSET_TAG = '<meta charset="UTF-8" />';
+const THEME_COLOR = '#101317';
 
 function contentSecurityPolicy(): Plugin {
   return {
@@ -32,7 +34,35 @@ function contentSecurityPolicy(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), contentSecurityPolicy()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      injectRegister: 'script-defer',
+      includeAssets: ['favicon.svg'],
+      manifest: {
+        name: 'Jsonium',
+        short_name: 'Jsonium',
+        description: 'Banco de trabajo JSON local. Cero red.',
+        lang: 'es',
+        theme_color: THEME_COLOR,
+        background_color: THEME_COLOR,
+        display: 'standalone',
+        start_url: './',
+        scope: './',
+        icons: [
+          { src: './favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: './favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg}'],
+        navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
+      },
+    }),
+    contentSecurityPolicy(),
+  ],
   base: './',
   build: {
     target: 'es2022',
