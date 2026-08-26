@@ -1,5 +1,6 @@
 import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import type { DiffResult } from '../core/diff';
+import type { QueryResult } from '../core/jsonpath';
 import type { SearchResult } from '../core/search';
 import type { NodeId, NodeSummary } from '../core/types';
 import type { TreeRow } from '../lib/tree-rows';
@@ -7,10 +8,11 @@ import type { DocumentStatus } from '../lib/use-document';
 import { ConvertPanel } from './ConvertPanel';
 import { DiffPanel } from './DiffPanel';
 import { DropZone } from './DropZone';
+import { QueryPanel } from './QueryPanel';
 import { JsonTree } from './JsonTree';
 import { SearchPanel } from './SearchPanel';
 
-export type PaneMode = 'tree' | 'diff' | 'convert';
+export type PaneMode = 'tree' | 'query' | 'diff' | 'convert';
 
 export interface SearchBinding {
   query: string;
@@ -39,6 +41,14 @@ export interface ConvertBinding {
   setFormat: (format: ConvertFormat) => void;
 }
 
+export interface QueryBinding {
+  expression: string;
+  result: QueryResult | null;
+  error: string | null;
+  isRunning: boolean;
+  setExpression: (expression: string) => void;
+}
+
 export interface NodeActionBinding {
   onToggle: (node: NodeSummary) => void;
   onCopyPath: (node: NodeSummary) => void;
@@ -54,6 +64,7 @@ interface DocumentPaneProps {
   search: SearchBinding;
   diff: DiffBinding;
   convert: ConvertBinding;
+  query: QueryBinding;
   actions: NodeActionBinding;
   mode: PaneMode;
   onModeChange: (mode: PaneMode) => void;
@@ -64,7 +75,7 @@ interface DocumentPaneProps {
 }
 
 export function DocumentPane(props: DocumentPaneProps) {
-  const { status, rows, expanded, search, diff, convert, actions, mode } = props;
+  const { status, rows, expanded, search, diff, convert, query, actions, mode } = props;
   const { onModeChange, onFile, onRevealPath, onExportDiff, onDownload } = props;
 
   if (status.state === 'empty') return <DropZone onFile={onFile} />;
@@ -81,9 +92,21 @@ export function DocumentPane(props: DocumentPaneProps) {
     <>
       <div className="modes" role="tablist" aria-label="Vista del documento">
         <ModeButton mode="tree" current={mode} label="Arbol" onSelect={onModeChange} />
+        <ModeButton mode="query" current={mode} label="Consultar" onSelect={onModeChange} />
         <ModeButton mode="diff" current={mode} label="Diff" onSelect={onModeChange} />
         <ModeButton mode="convert" current={mode} label="Convertir" onSelect={onModeChange} />
       </div>
+
+      {mode === 'query' && (
+        <QueryPanel
+          expression={query.expression}
+          result={query.result}
+          error={query.error}
+          isRunning={query.isRunning}
+          onExpressionChange={query.setExpression}
+          onReveal={onRevealPath}
+        />
+      )}
 
       {mode === 'convert' && (
         <ConvertPanel

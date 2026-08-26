@@ -1,5 +1,6 @@
 import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import type { DiffOptions, DiffResult } from '../core/diff';
+import type { QueryResult } from '../core/jsonpath';
 import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import type { RepairResult } from '../core/repair';
 import type { SearchResult } from '../core/search';
@@ -78,6 +79,10 @@ export class DocumentClient {
 
   importFile(file: File, format: ConvertFormat): Promise<ParseResult> {
     return this.send<ParseResult>((id) => ({ id, type: 'importFile', file, format }));
+  }
+
+  query(expression: string, limit: number): Promise<QueryResult> {
+    return this.send<QueryResult>((id) => ({ id, type: 'query', expression, limit }));
   }
 
   stats(): Promise<DocumentStats> {

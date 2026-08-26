@@ -3,6 +3,7 @@ import { analyzeConversion } from '../core/convert';
 import type { ConvertOutput } from '../core/convert';
 import { diff } from '../core/diff';
 import { messageOf } from '../core/error-message';
+import { queryPath } from '../core/jsonpath';
 import { COPY_MAX_CHARS, EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
 import { NodeRegistry } from '../core/node-registry';
 import { isWorkerRequest } from '../core/protocol';
@@ -30,6 +31,7 @@ type SerializeRequest = Extract<WorkerRequest, { type: 'serialize' }>;
 type SearchRequest = Extract<WorkerRequest, { type: 'search' }>;
 type DiffRequest = Extract<WorkerRequest, { type: 'diff' }>;
 type ConvertRequest = Extract<WorkerRequest, { type: 'convert' }>;
+type QueryRequest = Extract<WorkerRequest, { type: 'query' }>;
 type ImportRequest = Extract<WorkerRequest, { type: 'importFile' }>;
 
 // lib.dom no describe el scope de un worker: se acota a lo que realmente usamos
@@ -63,7 +65,7 @@ function adoptMain(value: unknown, sizeBytes: number): ParseResult {
   return { root: summarize({ key: null, index: null, value }, rootId), parseMs: 0, bytes: sizeBytes };
 }
 
-// js-yaml, smol-toml y papaparse suman ~50 kB: solo se cargan al convertir
+// js-yaml y smol-toml suman 68 kB: solo se cargan al convertir
 async function runConvert(request: ConvertRequest): Promise<ConvertOutput> {
   const value = requireMain();
   const losses = analyzeConversion(value, request.format);
@@ -114,6 +116,10 @@ function serializeNode(nodeId: NodeId): string {
     sortKeys: false,
     maxLength: COPY_MAX_CHARS,
   });
+}
+
+function runQuery(request: QueryRequest): ReturnType<typeof queryPath> {
+  return queryPath(requireMain(), request.expression, request.limit);
 }
 
 function runSearch(request: SearchRequest): ReturnType<typeof search> {
@@ -184,6 +190,8 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'convert', result: await runConvert(request) };
     case 'importFile':
       return { id, ok: true, type: 'importFile', result: await runImport(request) };
+    case 'query':
+      return { id, ok: true, type: 'query', result: runQuery(request) };
     case 'stats':
       return { id, ok: true, type: 'stats', result: computeStats(requireMain()) };
   }

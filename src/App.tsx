@@ -21,6 +21,7 @@ import { useJsonTree } from './lib/use-json-tree';
 import { useNodeActions } from './lib/use-node-actions';
 import { useConvert } from './lib/use-convert';
 import { useDiff } from './lib/use-diff';
+import { useQuery } from './lib/use-query';
 import { useSearch } from './lib/use-search';
 import { useShortcuts } from './lib/use-shortcuts';
 import { useTabs } from './lib/use-tabs';
@@ -38,6 +39,7 @@ export function App() {
   const [mode, setMode] = useState<PaneMode>('tree');
   const diffState = useDiff(client, status);
   const convertState = useConvert(client, status, mode === 'convert');
+  const queryState = useQuery(client, status.state === 'ready');
 
   useEffect(() => {
     setStats(null);
@@ -182,6 +184,7 @@ export function App() {
             search={search}
             diff={diffState}
             convert={convertState}
+            query={queryState}
             mode={mode}
             onModeChange={setMode}
             actions={{
