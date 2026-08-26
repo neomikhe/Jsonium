@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { messageOf } from '../core/error-message';
 import { PERSIST_MAX_BYTES } from '../core/limits';
-import type { ParseResult } from '../core/types';
 import type { DocumentEntry, StoredDocument } from './document-store';
 import {
   clearDocuments,
@@ -29,7 +28,7 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const openedRef = useRef(false);
-  const lastResultRef = useRef<ParseResult | null>(null);
+  const lastRevisionRef = useRef(0);
 
   const refresh = useCallback(() => {
     void listDocuments()
@@ -43,8 +42,8 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
 
   useEffect(() => {
     if (status.state !== 'ready') return;
-    if (status.result === lastResultRef.current) return;
-    lastResultRef.current = status.result;
+    if (status.revision === lastRevisionRef.current) return;
+    lastRevisionRef.current = status.revision;
     if (openedRef.current) {
       openedRef.current = false;
       return;

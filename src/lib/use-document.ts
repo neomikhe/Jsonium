@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { messageOf } from '../core/error-message';
 import { formatOfFile } from '../core/file-format';
 import type { ParseResult } from '../core/types';
@@ -11,12 +11,13 @@ export type DocumentOrigin = 'file' | 'editor';
 export type DocumentStatus =
   | { state: 'empty' }
   | { state: 'loading'; name: string }
-  | { state: 'ready'; name: string; origin: DocumentOrigin; result: ParseResult }
+  | { state: 'ready'; name: string; origin: DocumentOrigin; revision: number; result: ParseResult }
   | { state: 'failed'; name: string; error: string };
 
 export function useDocument() {
   const client = useMemo(() => new DocumentClient(), []);
   const [status, setStatus] = useState<DocumentStatus>({ state: 'empty' });
+  const revisionRef = useRef(0);
 
   useEffect(
     () => () => {
@@ -32,7 +33,14 @@ export function useDocument() {
         const format = formatOfFile(file.name);
         const result =
           format === null ? await client.parseFile(file) : await client.importFile(file, format);
-        setStatus({ state: 'ready', name: file.name, origin: 'file', result });
+        revisionRef.current += 1;
+        setStatus({
+          state: 'ready',
+          name: file.name,
+          origin: 'file',
+          revision: revisionRef.current,
+          result,
+        });
       } catch (error) {
         setStatus({ state: 'failed', name: file.name, error: messageOf(error) });
       }
@@ -43,10 +51,13 @@ export function useDocument() {
   const applyText = useCallback(
     async (text: string, name?: string) => {
       const result = await client.parseText(text);
+      revisionRef.current += 1;
+      const revision = revisionRef.current;
       setStatus((current) => ({
         state: 'ready',
         name: name ?? (current.state === 'ready' ? current.name : PASTED_NAME),
         origin: 'editor',
+        revision,
         result,
       }));
     },

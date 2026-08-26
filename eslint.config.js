@@ -66,7 +66,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.test.ts'],
+    files: ['**/*.test.{ts,tsx}'],
     rules: { 'no-magic-numbers': 'off', complexity: 'off' },
   },
   {
