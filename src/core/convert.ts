@@ -28,7 +28,6 @@ export interface ConvertOutput {
 export interface ConvertLoss {
   kind: LossKind;
   path: string;
-  detail: string;
 }
 
 export function analyzeConversion(value: unknown, format: ConvertFormat): ConvertLoss[] {
@@ -39,7 +38,7 @@ export function analyzeConversion(value: unknown, format: ConvertFormat): Conver
 
 function analyzeToml(root: unknown): ConvertLoss[] {
   if (!isPlainRecord(root)) {
-    return [loss('tomlRootNotTable', ROOT_PATH, 'TOML exige un objeto en la raiz')];
+    return [loss('tomlRootNotTable', ROOT_PATH)];
   }
 
   const losses: ConvertLoss[] = [];
@@ -49,7 +48,7 @@ function analyzeToml(root: unknown): ConvertLoss[] {
     const frame = stack.pop();
     if (frame === undefined) break;
     if (frame.value === null) {
-      losses.push(loss('tomlNullDropped', pathFrom(frame.link), 'TOML no tiene null: la clave se pierde'));
+      losses.push(loss('tomlNullDropped', pathFrom(frame.link)));
       continue;
     }
     pushReversed(stack, childFrames(frame));
@@ -60,13 +59,13 @@ function analyzeToml(root: unknown): ConvertLoss[] {
 
 function analyzeCsv(root: unknown): ConvertLoss[] {
   if (!isArrayValue(root)) {
-    return [loss('csvRootNotRowArray', ROOT_PATH, 'CSV necesita un array de filas en la raiz')];
+    return [loss('csvRootNotRowArray', ROOT_PATH)];
   }
   if (root.length === 0) return [];
 
   const badRow = root.findIndex((row) => !isPlainRecord(row));
   if (badRow !== -1) {
-    return [loss('csvRowNotObject', `${ROOT_PATH}[${badRow.toString()}]`, 'Cada fila debe ser un objeto')];
+    return [loss('csvRowNotObject', `${ROOT_PATH}[${badRow.toString()}]`)];
   }
 
   return rowLosses(root);
@@ -82,9 +81,9 @@ function rowLosses(rows: readonly unknown[]): ConvertLoss[] {
   });
 
   if (isRagged(rows, columns.size)) {
-    losses.push(loss('csvRaggedRows', ROOT_PATH, 'Las filas no comparten claves: habra celdas vacias'));
+    losses.push(loss('csvRaggedRows', ROOT_PATH));
   }
-  losses.push(loss('csvTypesLost', ROOT_PATH, 'CSV es texto: numeros y booleanos vuelven como cadenas'));
+  losses.push(loss('csvTypesLost', ROOT_PATH));
 
   return losses.slice(0, LOSS_MAX);
 }
@@ -95,7 +94,7 @@ function collectNested(row: unknown, index: number, losses: ConvertLoss[]): void
     if (losses.length >= LOSS_MAX) return;
     if (!isNested(record[key])) continue;
     const link: PathLink = { parent: { parent: null, key: null, index }, key, index: null };
-    losses.push(loss('csvNestedValue', pathFrom(link), 'Un valor anidado se guarda como texto JSON y vuelve como cadena'));
+    losses.push(loss('csvNestedValue', pathFrom(link)));
   }
 }
 
@@ -112,6 +111,6 @@ function toRecord(value: unknown): Record<string, unknown> {
   return isPlainRecord(value) ? value : {};
 }
 
-function loss(kind: LossKind, path: string, detail: string): ConvertLoss {
-  return { kind, path, detail };
+function loss(kind: LossKind, path: string): ConvertLoss {
+  return { kind, path };
 }

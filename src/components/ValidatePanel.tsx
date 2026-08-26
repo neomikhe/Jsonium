@@ -1,6 +1,7 @@
 import { VList } from 'virtua';
 import type { ValidationResult } from '../core/validate-schema';
 import { formatCount, formatDuration } from '../lib/format';
+import { useMessages } from '../lib/i18n';
 import { DropZone } from './DropZone';
 
 interface ValidatePanelProps {
@@ -44,6 +45,7 @@ interface FindingsProps {
 }
 
 function Findings({ result, onReveal }: FindingsProps) {
+  const messages = useMessages();
   if (result.isValid) {
     return <p className="notice notice--ok">El documento cumple el esquema.</p>;
   }
@@ -72,7 +74,9 @@ function Findings({ result, onReveal }: FindingsProps) {
           >
             <span className="hit__where hit__where--removed">{finding.keyword}</span>
             <span className="hit__path">{finding.path}</span>
-            <span className="hit__preview">{finding.message}</span>
+            <span className="hit__preview">
+              {messages.rule[finding.keyword] ?? finding.keyword} {finding.detail}
+            </span>
           </button>
         ))}
       </VList>

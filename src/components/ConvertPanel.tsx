@@ -2,6 +2,7 @@ import type { ConvertOutput } from '../core/convert';
 import type { OutputFormat } from '../lib/use-convert';
 import { CONVERT_PREVIEW_CHARS } from '../core/limits';
 import { formatCount } from '../lib/format';
+import { useMessages } from '../lib/i18n';
 
 const DATA_FORMATS: readonly OutputFormat[] = ['yaml', 'toml', 'csv', 'schema', 'mock'];
 const CODE_FORMATS: readonly OutputFormat[] = ['typescript', 'go', 'python', 'rust'];
@@ -94,6 +95,7 @@ function needsFailureNotice(output: ConvertOutput | null): boolean {
 }
 
 function ConvertOutputView({ output }: { output: ConvertOutput }) {
+  const messages = useMessages();
   const isTruncated = output.text.length > CONVERT_PREVIEW_CHARS;
   const preview = isTruncated ? output.text.slice(0, CONVERT_PREVIEW_CHARS) : output.text;
 
@@ -105,7 +107,7 @@ function ConvertOutputView({ output }: { output: ConvertOutput }) {
           <ul className="losses__list">
             {output.losses.map((loss) => (
               <li key={`${loss.kind}:${loss.path}`}>
-                <span className="losses__path">{loss.path}</span> {loss.detail}
+                <span className="losses__path">{loss.path}</span> {messages.loss[loss.kind]}
               </li>
             ))}
           </ul>

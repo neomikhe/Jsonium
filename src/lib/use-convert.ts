@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Language } from '../core/codegen';
 import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import { messageOf } from '../core/error-message';
+import { ROOT_PATH } from '../core/json-path';
 import type { InferResult } from '../core/infer-schema';
 import { INDENT_SPACES, MOCK_DEFAULT_COUNT, MOCK_MAX_COUNT } from '../core/limits';
 import type { DocumentClient } from './document-client';
@@ -101,15 +102,7 @@ function toPlainOutput(text: string): ConvertOutput {
 function toSchemaOutput(result: InferResult): ConvertOutput {
   return {
     text: JSON.stringify(result.schema, null, INDENT_SPACES),
-    losses: result.isTruncated
-      ? [
-          {
-            kind: 'schemaTruncated',
-            path: '$',
-            detail: 'El documento es demasiado profundo o variado: el esquema esta recortado',
-          },
-        ]
-      : [],
+    losses: result.isTruncated ? [{ kind: 'schemaTruncated', path: ROOT_PATH }] : [],
     failure: null,
   };
 }

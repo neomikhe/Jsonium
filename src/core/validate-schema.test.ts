@@ -144,7 +144,7 @@ describe('validate: enum, const y combinadores', () => {
     const result = validateSchema(4, { allOf: [{ minimum: 5 }] }, LIMIT);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]?.keyword).toBe('allOf');
-    expect(result.errors[0]?.message).toBe('0 de 1 cumplen');
+    expect(result.errors[0]?.detail).toBe('0/1');
   });
 
   it('oneOf exige exactamente una rama', () => {

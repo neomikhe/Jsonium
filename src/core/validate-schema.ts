@@ -1,12 +1,12 @@
 import type { PathLink } from './json-path';
-import { pathFrom } from './json-path';
+import { ROOT_PATH, pathFrom } from './json-path';
 import { isArrayValue, isPlainRecord, kindOf } from './json-value';
 import { pushReversed } from './stack';
 
 export interface ValidationError {
   path: string;
   keyword: string;
-  message: string;
+  detail: string;
 }
 
 export interface ValidationResult {
@@ -25,29 +25,27 @@ interface Task {
 interface Rule {
   keyword: string;
   holds: (measured: number, bound: number) => boolean;
-  message: string;
 }
 
 const NUMBER_RULES: readonly Rule[] = [
-  { keyword: 'minimum', holds: (v, b) => v >= b, message: 'es menor que minimum' },
-  { keyword: 'maximum', holds: (v, b) => v <= b, message: 'es mayor que maximum' },
-  { keyword: 'exclusiveMinimum', holds: (v, b) => v > b, message: 'no supera exclusiveMinimum' },
-  { keyword: 'exclusiveMaximum', holds: (v, b) => v < b, message: 'no baja de exclusiveMaximum' },
+  { keyword: 'minimum', holds: (v, b) => v >= b },
+  { keyword: 'maximum', holds: (v, b) => v <= b },
+  { keyword: 'exclusiveMinimum', holds: (v, b) => v > b },
+  { keyword: 'exclusiveMaximum', holds: (v, b) => v < b },
   {
     keyword: 'multipleOf',
-    holds: (v, b) => b !== 0 && Number.isInteger(v / b),
-    message: 'no es multiplo',
+    holds: (v, b) => b !== 0 && Number.isInteger(v / b)
   },
 ];
 
 const LENGTH_RULES: readonly Rule[] = [
-  { keyword: 'minLength', holds: (v, b) => v >= b, message: 'es mas corta que minLength' },
-  { keyword: 'maxLength', holds: (v, b) => v <= b, message: 'es mas larga que maxLength' },
+  { keyword: 'minLength', holds: (v, b) => v >= b },
+  { keyword: 'maxLength', holds: (v, b) => v <= b },
 ];
 
 const SIZE_RULES: readonly Rule[] = [
-  { keyword: 'minItems', holds: (v, b) => v >= b, message: 'tiene menos de minItems' },
-  { keyword: 'maxItems', holds: (v, b) => v <= b, message: 'tiene mas de maxItems' },
+  { keyword: 'minItems', holds: (v, b) => v >= b },
+  { keyword: 'maxItems', holds: (v, b) => v <= b },
 ];
 
 const CHECKS: readonly ((task: Task) => ValidationError[])[] = [
@@ -66,7 +64,7 @@ export function validateSchema(value: unknown, schema: unknown, limit: number): 
   const startedAt = performance.now();
   if (!isPlainRecord(schema)) {
     return {
-      errors: [{ path: '$', keyword: 'schema', message: 'El esquema debe ser un objeto' }],
+      errors: [{ path: ROOT_PATH, keyword: 'schema', detail: '' }],
       isValid: false,
       isTruncated: false,
       scanMs: performance.now() - startedAt,
@@ -96,7 +94,7 @@ function checkType(task: Task): ValidationError[] {
   if (expected === undefined) return [];
   const allowed = isArrayValue(expected) ? expected : [expected];
   if (matchesType(task.value, allowed)) return [];
-  return [fault(task, 'type', `se esperaba ${allowed.join(' o ')} y hay ${kindOf(task.value)}`)];
+  return [fault(task, 'type', `${allowed.join('|')} != ${kindOf(task.value)}`)];
 }
 
 function matchesType(value: unknown, allowed: readonly unknown[]): boolean {
@@ -109,13 +107,13 @@ function checkEnum(task: Task): ValidationError[] {
   if (!isArrayValue(options)) return [];
   const encoded = JSON.stringify(task.value);
   if (options.some((option) => JSON.stringify(option) === encoded)) return [];
-  return [fault(task, 'enum', 'el valor no esta entre los permitidos')];
+  return [fault(task, 'enum', '')];
 }
 
 function checkConst(task: Task): ValidationError[] {
   if (!Object.hasOwn(task.schema, 'const')) return [];
   if (JSON.stringify(task.schema['const']) === JSON.stringify(task.value)) return [];
-  return [fault(task, 'const', 'el valor no coincide con const')];
+  return [fault(task, 'const', '')];
 }
 
 function checkNumbers(task: Task): ValidationError[] {
@@ -145,15 +143,15 @@ function applyRule(task: Task, rule: Rule, measured: number): ValidationError[] 
   const bound = task.schema[rule.keyword];
   if (typeof bound !== 'number') return [];
   if (rule.holds(measured, bound)) return [];
-  return [fault(task, rule.keyword, `${rule.message} (${bound.toString()})`)];
+  return [fault(task, rule.keyword, bound.toString())];
 }
 
 function checkPattern(task: Task, text: string): ValidationError[] {
   const pattern = task.schema['pattern'];
   if (typeof pattern !== 'string') return [];
   const matcher = compile(pattern);
-  if (matcher === null) return [fault(task, 'pattern', `patron no valido: ${pattern}`)];
-  return matcher.test(text) ? [] : [fault(task, 'pattern', `no cumple el patron ${pattern}`)];
+  if (matcher === null) return [fault(task, 'pattern', pattern)];
+  return matcher.test(text) ? [] : [fault(task, 'pattern', pattern)];
 }
 
 function compile(pattern: string): RegExp | null {
@@ -168,7 +166,7 @@ function checkUnique(task: Task, items: readonly unknown[]): ValidationError[] {
   if (task.schema['uniqueItems'] !== true) return [];
   const seen = new Set(items.map((item) => JSON.stringify(item)));
   if (seen.size === items.length) return [];
-  return [fault(task, 'uniqueItems', 'hay elementos repetidos')];
+  return [fault(task, 'uniqueItems', '')];
 }
 
 function checkRequired(task: Task): ValidationError[] {
@@ -177,7 +175,7 @@ function checkRequired(task: Task): ValidationError[] {
   const record = task.value;
   return required
     .filter((key) => typeof key === 'string' && !Object.hasOwn(record, key))
-    .map((key) => fault(task, 'required', `falta la clave ${String(key)}`));
+    .map((key) => fault(task, 'required', String(key)));
 }
 
 function checkAdditional(task: Task): ValidationError[] {
@@ -185,7 +183,7 @@ function checkAdditional(task: Task): ValidationError[] {
   const known = new Set(Object.keys(toRecord(task.schema['properties'])));
   return Object.keys(task.value)
     .filter((key) => !known.has(key))
-    .map((key) => fault(task, 'additionalProperties', `clave no permitida: ${key}`));
+    .map((key) => fault(task, 'additionalProperties', key));
 }
 
 function checkCombinators(task: Task): ValidationError[] {
@@ -201,7 +199,7 @@ function checkBranches(task: Task, keyword: string): ValidationError[] {
   if (!isArrayValue(branches)) return [];
   const passing = branches.filter((branch) => validateSchema(task.value, branch, 1).isValid).length;
   if (isSatisfied(keyword, passing, branches.length)) return [];
-  return [fault(task, keyword, `${passing.toString()} de ${branches.length.toString()} cumplen`)];
+  return [fault(task, keyword, `${passing.toString()}/${branches.length.toString()}`)];
 }
 
 function isSatisfied(keyword: string, passing: number, total: number): boolean {
@@ -244,6 +242,6 @@ function toRecord(value: unknown): Record<string, unknown> {
   return isPlainRecord(value) ? value : {};
 }
 
-function fault(task: Task, keyword: string, message: string): ValidationError {
-  return { path: pathFrom(task.link), keyword, message };
+function fault(task: Task, keyword: string, detail: string): ValidationError {
+  return { path: pathFrom(task.link), keyword, detail };
 }
