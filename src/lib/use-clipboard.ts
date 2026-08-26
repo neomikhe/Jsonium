@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMessages } from './i18n';
 
 const HINT_MS = 2000;
 
@@ -9,6 +10,7 @@ interface ClipboardState {
 }
 
 export function useClipboard(): ClipboardState {
+  const messages = useMessages();
   const [hint, setHint] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -35,10 +37,10 @@ export function useClipboard(): ClipboardState {
           notify(message);
         })
         .catch(() => {
-          notify('El navegador bloqueo el portapapeles');
+          notify(messages.clipboardBlocked);
         });
     },
-    [notify],
+    [notify, messages],
   );
 
   return { hint, copy, notify };

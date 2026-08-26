@@ -4,6 +4,7 @@ import { analyzeConversion } from '../core/convert';
 import type { ConvertOutput } from '../core/convert';
 import { diff } from '../core/diff';
 import { messageOf } from '../core/error-message';
+import { DocumentFailure } from '../core/failure';
 import { inferSchema } from '../core/infer-schema';
 import { queryPath } from '../core/jsonpath';
 import { COPY_MAX_CHARS, EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
@@ -70,7 +71,11 @@ function adoptMain(value: unknown, sizeBytes: number): ParseResult {
   main.isLoaded = true;
   registry.clear();
   const rootId = registry.register({ value, parentId: null, key: null, index: null });
-  return { root: summarize({ key: null, index: null, value }, rootId), parseMs: 0, bytes: sizeBytes };
+  return {
+    root: summarize({ key: null, index: null, value }, rootId),
+    parseMs: 0,
+    bytes: sizeBytes,
+  };
 }
 
 // js-yaml y smol-toml suman 68 kB: solo se cargan al convertir
@@ -129,7 +134,7 @@ function readChildren(request: ChildrenRequest): NodeSummary[] {
 function serializeDocument(request: SerializeRequest): string {
   const document = requireMain();
   if (main.bytes > EDITOR_MAX_BYTES) {
-    throw new Error('Documento demasiado grande para serializar en el editor');
+    throw new DocumentFailure('document-too-large');
   }
   return serialize(document, request.options);
 }
@@ -152,7 +157,7 @@ function runSearch(request: SearchRequest): ReturnType<typeof search> {
 
 function runDiff(request: DiffRequest): ReturnType<typeof diff> {
   const left = requireMain();
-  if (!compare.isLoaded) throw new Error('Falta el documento con el que comparar');
+  if (!compare.isLoaded) throw new DocumentFailure('compare-missing');
   return diff(left, compare.value, request.options);
 }
 
@@ -164,12 +169,12 @@ function clearCompare(): null {
 }
 
 function requireNode(nodeId: NodeId): unknown {
-  if (!registry.has(nodeId)) throw new Error(`Nodo desconocido: ${nodeId.toString()}`);
+  if (!registry.has(nodeId)) throw new DocumentFailure('node-unknown', nodeId.toString());
   return registry.read(nodeId);
 }
 
 function requireMain(): unknown {
-  if (!main.isLoaded) throw new Error('No hay documento cargado');
+  if (!main.isLoaded) throw new DocumentFailure('document-missing');
   return main.value;
 }
 
@@ -182,7 +187,12 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'parseFile', result: parseMain(text, request.file.size) };
     }
     case 'parseText':
-      return { id, ok: true, type: 'parseText', result: parseMain(request.text, request.text.length) };
+      return {
+        id,
+        ok: true,
+        type: 'parseText',
+        result: parseMain(request.text, request.text.length),
+      };
     case 'compareFile': {
       const text = await request.file.text();
       return { id, ok: true, type: 'compareFile', result: parseCompare(text, request.file.size) };

@@ -36,7 +36,7 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **77.3 kB** |
+| Initial bundle (gzip) | **81.0 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
@@ -120,6 +120,8 @@ or a general-purpose "everything" toolbox.
   unreachable — verified by killing the server and reloading
 - **Keyboard shortcuts**: Ctrl/Cmd + Shift + F, M and O for format, minify and sort keys
 - **Recent documents** persisted in IndexedDB, so a reload does not lose your work
+- **English and Spanish**, picked from your browser and switchable from the header. The choice is
+  the only thing Jsonium ever writes to `localStorage` — never your document
 - Iterative traversal everywhere, so deeply nested documents cannot blow the stack
   (tested to 200,000 levels)
 
@@ -219,7 +221,7 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **77,3 kB** |
+| Bundle inicial (gzip) | **81,0 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
@@ -281,6 +283,8 @@ de 5 MB no se guarda nada.
   funcionando con el servidor caído: verificado apagándolo y recargando
 - **Atajos de teclado**: Ctrl/Cmd + Shift + F, M y O para formatear, minificar y ordenar claves
 - **Documentos recientes** guardados en IndexedDB: recargar no pierde el trabajo
+- **Español e inglés**, elegido según tu navegador y conmutable desde la cabecera. Esa elección es
+  lo único que Jsonium escribe en `localStorage`: nunca tu documento
 - Recorridos iterativos en todo el núcleo: el anidamiento profundo no desborda la pila
   (probado con 200.000 niveles)
 

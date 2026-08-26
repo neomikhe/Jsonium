@@ -1,4 +1,5 @@
 import { isPlainRecord } from './json-value';
+import { DocumentFailure } from './failure';
 import { pushReversed } from './stack';
 
 export interface SerializeOptions {
@@ -39,7 +40,7 @@ function resolve(item: Emit, options: SerializeOptions, stack: Emit[]): string |
 function guardLength(total: number, options: SerializeOptions): void {
   const max = options.maxLength;
   if (max !== undefined && total > max) {
-    throw new Error('El valor supera el limite permitido para copiarlo');
+    throw new DocumentFailure('value-too-large');
   }
 }
 

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { messageOf } from '../core/error-message';
 import { PERSIST_MAX_BYTES } from '../core/limits';
 import type { DocumentEntry, StoredDocument } from './document-store';
 import {
@@ -16,7 +15,7 @@ const PERSIST_DEBOUNCE_MS = 800;
 interface TabsState {
   entries: readonly DocumentEntry[];
   activeId: string | null;
-  error: string | null;
+  hasFailed: boolean;
   isPersisted: boolean;
   open: (id: string) => Promise<StoredDocument | null>;
   close: (id: string) => void;
@@ -26,17 +25,16 @@ interface TabsState {
 export function useTabs(status: DocumentStatus, text: string): TabsState {
   const [entries, setEntries] = useState<readonly DocumentEntry[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [hasFailed, setHasFailed] = useState(false);
+  const fail = useCallback(() => {
+    setHasFailed(true);
+  }, []);
   const openedRef = useRef(false);
   const lastRevisionRef = useRef(0);
 
   const refresh = useCallback(() => {
-    void listDocuments()
-      .then(setEntries)
-      .catch((cause: unknown) => {
-        setError(messageOf(cause));
-      });
-  }, []);
+    void listDocuments().then(setEntries).catch(fail);
+  }, [fail]);
 
   useEffect(refresh, [refresh]);
 
@@ -65,16 +63,12 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
       savedAt: Date.now(),
     };
     const timer = window.setTimeout(() => {
-      void saveDocument(record)
-        .then(refresh)
-        .catch((cause: unknown) => {
-          setError(messageOf(cause));
-        });
+      void saveDocument(record).then(refresh).catch(fail);
     }, PERSIST_DEBOUNCE_MS);
     return () => {
       clearTimeout(timer);
     };
-  }, [status, text, activeId, isPersisted, refresh]);
+  }, [status, text, activeId, isPersisted, refresh, fail]);
 
   const open = useCallback(async (id: string) => {
     const stored = await loadDocument(id);
@@ -86,24 +80,16 @@ export function useTabs(status: DocumentStatus, text: string): TabsState {
 
   const close = useCallback(
     (id: string) => {
-      void removeDocument(id)
-        .then(refresh)
-        .catch((cause: unknown) => {
-          setError(messageOf(cause));
-        });
+      void removeDocument(id).then(refresh).catch(fail);
     },
-    [refresh],
+    [refresh, fail],
   );
 
   const clearAll = useCallback(() => {
-    void clearDocuments()
-      .then(refresh)
-      .catch((cause: unknown) => {
-        setError(messageOf(cause));
-      });
-  }, [refresh]);
+    void clearDocuments().then(refresh).catch(fail);
+  }, [refresh, fail]);
 
-  return { entries, activeId, error, isPersisted, open, close, clearAll };
+  return { entries, activeId, hasFailed, isPersisted, open, close, clearAll };
 }
 
 function idForName(entries: readonly DocumentEntry[], name: string): string | null {

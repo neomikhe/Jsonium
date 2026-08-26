@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ACCEPTED_FILES } from '../core/file-format';
+import { useMessages } from '../lib/i18n';
 import type { ChangeEvent, DragEvent } from 'react';
 
 interface DropZoneProps {
@@ -9,6 +10,7 @@ interface DropZoneProps {
 }
 
 export function DropZone({ onFile, isCompact = false, label }: DropZoneProps) {
+  const messages = useMessages();
   const [isOver, setIsOver] = useState(false);
 
   const handleDrop = useCallback(
@@ -42,11 +44,9 @@ export function DropZone({ onFile, isCompact = false, label }: DropZoneProps) {
       onDrop={handleDrop}
     >
       <span className="dropzone__title">
-        {label ?? (isCompact ? 'Abrir otro documento' : 'Suelta un archivo JSON')}
+        {label ?? (isCompact ? messages.openAnother : messages.dropFile)}
       </span>
-      {!isCompact && (
-        <span className="dropzone__hint">o pulsa para elegirlo. Nada sale de tu equipo.</span>
-      )}
+      {!isCompact && <span className="dropzone__hint">{messages.dropHint}</span>}
       <input type="file" accept={ACCEPTED_FILES} onChange={handleSelect} />
     </label>
   );

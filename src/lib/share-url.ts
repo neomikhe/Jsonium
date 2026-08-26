@@ -3,17 +3,17 @@ import { SHARE_MAX_CHARS } from '../core/limits';
 
 const PREFIX = '#d=';
 
+export type ShareFailure = 'empty' | 'tooLarge';
+
 export interface ShareResult {
   hash: string | null;
-  reason: string | null;
+  failure: ShareFailure | null;
 }
 
 export function encodeShare(text: string): ShareResult {
-  if (text.trim() === '') return { hash: null, reason: 'No hay nada que compartir' };
-  if (text.length > SHARE_MAX_CHARS) {
-    return { hash: null, reason: 'El documento es demasiado grande para caber en una URL' };
-  }
-  return { hash: `${PREFIX}${compressToEncodedURIComponent(text)}`, reason: null };
+  if (text.trim() === '') return { hash: null, failure: 'empty' };
+  if (text.length > SHARE_MAX_CHARS) return { hash: null, failure: 'tooLarge' };
+  return { hash: `${PREFIX}${compressToEncodedURIComponent(text)}`, failure: null };
 }
 
 export function decodeShare(hash: string): string | null {

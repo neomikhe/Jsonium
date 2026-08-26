@@ -3,6 +3,7 @@ import type { OutputFormat } from '../lib/use-convert';
 import { CONVERT_PREVIEW_CHARS } from '../core/limits';
 import { formatCount } from '../lib/format';
 import { useMessages } from '../lib/i18n';
+import { describeFailure } from '../lib/describe-failure';
 
 const DATA_FORMATS: readonly OutputFormat[] = ['yaml', 'toml', 'csv', 'schema', 'mock'];
 const CODE_FORMATS: readonly OutputFormat[] = ['typescript', 'go', 'python', 'rust'];
@@ -32,13 +33,16 @@ interface ConvertPanelProps {
 
 export function ConvertPanel(props: ConvertPanelProps) {
   const { output, error, isRunning } = props;
+  const messages = useMessages();
 
   return (
     <>
       <ConvertBar {...props} />
-      {error !== null && <p className="notice notice--error">{error}</p>}
-      {isRunning && <p className="notice">Convirtiendo...</p>}
-      {needsFailureNotice(output) && <p className="notice notice--error">{output?.failure}</p>}
+      {error !== null && <p className="notice notice--error">{describeFailure(messages, error)}</p>}
+      {isRunning && <p className="notice">{messages.converting}</p>}
+      {needsFailureNotice(output) && (
+        <p className="notice notice--error">{describeFailure(messages, output?.failure ?? '')}</p>
+      )}
       {output !== null && !isRunning && <ConvertOutputView output={output} />}
     </>
   );
@@ -47,6 +51,7 @@ export function ConvertPanel(props: ConvertPanelProps) {
 function ConvertBar(props: ConvertPanelProps) {
   const { format, output, onFormatChange, onCopy, onDownload, mockCount, onMockCountChange } =
     props;
+  const messages = useMessages();
   const text = output?.text ?? '';
 
   return (
@@ -73,7 +78,7 @@ function ConvertBar(props: ConvertPanelProps) {
               onCopy(text);
             }}
           >
-            Copiar
+            {messages.copy}
           </button>
           <button
             type="button"
@@ -82,7 +87,7 @@ function ConvertBar(props: ConvertPanelProps) {
               onDownload(text, format);
             }}
           >
-            Descargar
+            {messages.download}
           </button>
         </>
       )}
@@ -103,7 +108,7 @@ function ConvertOutputView({ output }: { output: ConvertOutput }) {
     <>
       {output.losses.length > 0 && (
         <div className="losses" role="status">
-          <span className="losses__title">Esta conversion pierde informacion</span>
+          <span className="losses__title">{messages.lossTitle}</span>
           <ul className="losses__list">
             {output.losses.map((loss) => (
               <li key={`${loss.kind}:${loss.path}`}>
@@ -115,10 +120,7 @@ function ConvertOutputView({ output }: { output: ConvertOutput }) {
       )}
 
       {isTruncated && (
-        <p className="notice">
-          Se muestran los primeros {formatCount(CONVERT_PREVIEW_CHARS)} caracteres. Copiar entrega el
-          texto completo.
-        </p>
+        <p className="notice">{messages.truncatedPreview(formatCount(CONVERT_PREVIEW_CHARS))}</p>
       )}
 
       {output.text !== '' && <pre className="convert__output">{preview}</pre>}
@@ -127,9 +129,11 @@ function ConvertOutputView({ output }: { output: ConvertOutput }) {
 }
 
 function MockCount({ value, onChange }: { value: number; onChange: (count: number) => void }) {
+  const messages = useMessages();
+
   return (
     <label className="diff__key">
-      cuantos
+      {messages.howMany}
       <input
         type="number"
         min={1}

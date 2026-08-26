@@ -1,13 +1,9 @@
 import { VList } from 'virtua';
 import type { DiffChange, DiffResult } from '../core/diff';
 import { formatCount, formatDuration } from '../lib/format';
+import { useMessages } from '../lib/i18n';
+import { describeFailure } from '../lib/describe-failure';
 import { DropZone } from './DropZone';
-
-const KIND_LABELS: Record<DiffChange['kind'], string> = {
-  added: 'alta',
-  removed: 'baja',
-  changed: 'cambio',
-};
 
 interface DiffPanelProps {
   compareName: string | null;
@@ -25,23 +21,24 @@ interface DiffPanelProps {
 export function DiffPanel(props: DiffPanelProps) {
   const { compareName, arrayKey, result, error, isRunning } = props;
   const { onArrayKeyChange, onFile, onClear, onReveal, onExport } = props;
+  const messages = useMessages();
 
   if (compareName === null) {
-    return <DropZone onFile={onFile} label="Suelta el documento con el que comparar" />;
+    return <DropZone onFile={onFile} label={messages.dropCompare} />;
   }
 
   return (
     <>
       <div className="diff__bar">
         <span className="diff__name" title={compareName}>
-          vs {compareName}
+          {messages.versus(compareName)}
         </span>
         <label className="diff__key">
-          emparejar arrays por
+          {messages.matchArraysBy}
           <input
             type="text"
             value={arrayKey}
-            placeholder="indice"
+            placeholder={messages.byIndex}
             onChange={(event) => {
               onArrayKeyChange(event.target.value);
             }}
@@ -55,16 +52,16 @@ export function DiffPanel(props: DiffPanelProps) {
               onExport(result);
             }}
           >
-            Exportar
+            {messages.exportDiff}
           </button>
         )}
         <button type="button" className="diff__clear" onClick={onClear}>
-          Quitar
+          {messages.remove}
         </button>
       </div>
 
-      {error !== null && <p className="notice notice--error">{error}</p>}
-      {isRunning && <p className="notice">Comparando...</p>}
+      {error !== null && <p className="notice notice--error">{describeFailure(messages, error)}</p>}
+      {isRunning && <p className="notice">{messages.comparing}</p>}
       {result !== null && !isRunning && <DiffChanges result={result} onReveal={onReveal} />}
     </>
   );
@@ -76,8 +73,9 @@ interface DiffChangesProps {
 }
 
 function DiffChanges({ result, onReveal }: DiffChangesProps) {
+  const messages = useMessages();
   if (result.changes.length === 0) {
-    return <p className="notice">Los dos documentos son iguales.</p>;
+    return <p className="notice">{messages.documentsEqual}</p>;
   }
 
   return (
@@ -91,23 +89,23 @@ function DiffChanges({ result, onReveal }: DiffChangesProps) {
           ~{formatCount(result.summary.changed)}
         </span>
         <span className="diff__time">
-          {result.isTruncated ? 'limite alcanzado · ' : ''}
+          {result.isTruncated ? `${messages.limitReached} · ` : ''}
           {formatDuration(result.scanMs)}
         </span>
       </p>
-      <VList className="tree" role="list" aria-label="Cambios entre documentos">
+      <VList className="tree" role="list" aria-label={messages.changesLabel}>
         {result.changes.map((change) => (
           <button
             key={`${change.kind}:${change.path}`}
             type="button"
             className="hit"
-            title="Mostrar en el editor"
+            title={messages.showInEditor}
             onClick={() => {
               onReveal(change.path);
             }}
           >
             <span className={`hit__where hit__where--${change.kind}`}>
-              {KIND_LABELS[change.kind]}
+              {messages.changeKind[change.kind]}
             </span>
             <span className="hit__path">{change.path}</span>
             <span className="hit__preview">{describe(change)}</span>

@@ -1,5 +1,6 @@
 import type { DocumentStats, ParseResult } from '../core/types';
 import { formatBytes, formatCount, formatDuration } from '../lib/format';
+import { useMessages } from '../lib/i18n';
 
 interface StatusBarProps {
   name: string;
@@ -9,22 +10,24 @@ interface StatusBarProps {
 }
 
 export function StatusBar({ name, result, stats, onRequestStats }: StatusBarProps) {
+  const messages = useMessages();
+
   return (
     <div className="status">
       <span className="status__name" title={name}>
         {name}
       </span>
-      <Metric label="tamano" value={formatBytes(result.bytes)} />
-      <Metric label="parse" value={formatDuration(result.parseMs)} />
+      <Metric label={messages.size} value={formatBytes(result.bytes)} />
+      <Metric label={messages.parse} value={formatDuration(result.parseMs)} />
       {stats === null ? (
         <button type="button" className="status__action" onClick={onRequestStats}>
-          Calcular estadisticas
+          {messages.computeStats}
         </button>
       ) : (
         <>
-          <Metric label="nodos" value={formatCount(stats.nodes)} />
-          <Metric label="profundidad" value={formatCount(stats.maxDepth)} />
-          <Metric label="scan" value={formatDuration(stats.scanMs)} />
+          <Metric label={messages.nodes} value={formatCount(stats.nodes)} />
+          <Metric label={messages.depth} value={formatCount(stats.maxDepth)} />
+          <Metric label={messages.scan} value={formatDuration(stats.scanMs)} />
         </>
       )}
     </div>

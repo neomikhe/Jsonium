@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DocumentFailure } from './failure';
 import { queryPath } from './jsonpath';
 
 const LIMIT = 100;
@@ -103,25 +104,43 @@ describe('jsonpath: descenso recursivo', () => {
   });
 });
 
+function failureOf(expression: string): { code: string; detail: string } | null {
+  try {
+    queryPath(DOC, expression, LIMIT);
+    return null;
+  } catch (cause) {
+    return cause instanceof DocumentFailure ? { code: cause.code, detail: detailOf(cause) } : null;
+  }
+}
+
+function detailOf(failure: DocumentFailure): string {
+  const at = failure.message.indexOf(':');
+  return at === -1 ? '' : failure.message.slice(at + 1);
+}
+
 describe('jsonpath: errores de sintaxis', () => {
-  it('exige empezar por $', () => {
-    expect(() => queryPath(DOC, 'store.book', LIMIT)).toThrow(/empezar por \$/);
+  it('exige empezar por la raiz', () => {
+    expect(failureOf('store.book')).toEqual({ code: 'query-root', detail: '' });
   });
 
   it('rechaza una consulta vacia', () => {
-    expect(() => queryPath(DOC, '   ', LIMIT)).toThrow(/vacia/);
+    expect(failureOf('   ')).toEqual({ code: 'query-empty', detail: '' });
   });
 
   it('avisa del corchete sin cerrar', () => {
-    expect(() => queryPath(DOC, '$.store.book[0', LIMIT)).toThrow(/corchete/);
+    expect(failureOf('$.store.book[0')).toEqual({ code: 'query-bracket', detail: '' });
   });
 
-  it('avisa de un indice no valido', () => {
-    expect(() => queryPath(DOC, '$.store.book[abc]', LIMIT)).toThrow(/Indice no valido/);
+  it('avisa de un indice no valido y dice cual', () => {
+    expect(failureOf('$.store.book[abc]')).toEqual({ code: 'query-index', detail: 'abc' });
   });
 
   it('avisa de un punto sin nombre', () => {
-    expect(() => queryPath(DOC, '$.store.', LIMIT)).toThrow(/Falta el nombre/);
+    expect(failureOf('$.store.')).toEqual({ code: 'query-name-dot', detail: '' });
+  });
+
+  it('el fallo viaja como codigo, no como prosa', () => {
+    expect(() => queryPath(DOC, '   ', LIMIT)).toThrow('query-empty');
   });
 });
 

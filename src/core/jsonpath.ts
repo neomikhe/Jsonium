@@ -1,4 +1,5 @@
 import { ROOT_PATH, pathFrom } from './json-path';
+import { DocumentFailure } from './failure';
 import { kindOf, previewOf } from './json-value';
 import { pushReversed } from './stack';
 import type { WalkFrame } from './walk';
@@ -56,7 +57,8 @@ function applySegment(frame: WalkFrame, segment: Segment): WalkFrame[] {
   if (segment.kind === 'wildcard') return children;
   if (segment.kind === 'key') return children.filter((child) => keyOf(child) === segment.name);
   if (segment.kind === 'index') return atIndex(children, segment.at);
-  if (segment.kind === 'slice') return children.slice(sliceStart(segment, children.length), sliceEnd(segment, children.length));
+  if (segment.kind === 'slice')
+    return children.slice(sliceStart(segment, children.length), sliceEnd(segment, children.length));
   return descend(frame, segment.name);
 }
 
@@ -102,8 +104,8 @@ function toMatch(frame: WalkFrame): QueryMatch {
 
 function parseSegments(expression: string): Segment[] {
   const source = expression.trim();
-  if (source === '') throw new Error('La consulta esta vacia');
-  if (!source.startsWith(ROOT_PATH)) throw new Error('La consulta debe empezar por $');
+  if (source === '') throw new DocumentFailure('query-empty');
+  if (!source.startsWith(ROOT_PATH)) throw new DocumentFailure('query-root');
 
   const segments: Segment[] = [];
   let index = ROOT_PATH.length;
@@ -116,7 +118,7 @@ function parseSegments(expression: string): Segment[] {
 function readSegment(source: string, start: number, segments: Segment[]): number {
   const char = source[start] ?? '';
   if (char === '[') return readBracket(source, start, segments);
-  if (char !== '.') throw new Error(`Se esperaba . o [ en la posicion ${start.toString()}`);
+  if (char !== '.') throw new DocumentFailure('query-separator', start.toString());
   if (source[start + 1] === '.') return readDescend(source, start + 2, segments);
   return readDotted(source, start + 1, segments);
 }
@@ -127,21 +129,21 @@ function readDotted(source: string, start: number, segments: Segment[]): number 
     return start + 1;
   }
   const end = readName(source, start);
-  if (end === start) throw new Error('Falta el nombre despues del punto');
+  if (end === start) throw new DocumentFailure('query-name-dot');
   segments.push({ kind: 'key', name: source.slice(start, end) });
   return end;
 }
 
 function readDescend(source: string, start: number, segments: Segment[]): number {
   const end = readName(source, start);
-  if (end === start) throw new Error('Falta el nombre despues de ..');
+  if (end === start) throw new DocumentFailure('query-name-descend');
   segments.push({ kind: 'descend', name: source.slice(start, end) });
   return end;
 }
 
 function readBracket(source: string, start: number, segments: Segment[]): number {
   const close = source.indexOf(']', start);
-  if (close === -1) throw new Error('Falta el corchete de cierre');
+  if (close === -1) throw new DocumentFailure('query-bracket');
   const inner = source.slice(start + 1, close).trim();
   segments.push(parseBracket(inner));
   return close + 1;
@@ -152,7 +154,7 @@ function parseBracket(inner: string): Segment {
   if (QUOTES.has(inner[0] ?? '')) return { kind: 'key', name: inner.slice(1, -1) };
   if (inner.includes(':')) return parseSlice(inner);
   const at = Number(inner);
-  if (!Number.isInteger(at)) throw new Error(`Indice no valido: ${inner}`);
+  if (!Number.isInteger(at)) throw new DocumentFailure('query-index', inner);
   return { kind: 'index', at };
 }
 
@@ -165,7 +167,7 @@ function toBound(text: string | undefined): number | null {
   const trimmed = text?.trim() ?? '';
   if (trimmed === '') return null;
   const value = Number(trimmed);
-  if (!Number.isInteger(value)) throw new Error(`Limite no valido: ${trimmed}`);
+  if (!Number.isInteger(value)) throw new DocumentFailure('query-bound', trimmed);
   return value;
 }
 

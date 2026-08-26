@@ -1,3 +1,5 @@
+import { useMessages } from '../lib/i18n';
+
 interface ToolbarProps {
   isDisabled: boolean;
   onFormat: () => void;
@@ -7,24 +9,26 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ isDisabled, onFormat, onMinify, onSortKeys, onShare }: ToolbarProps) {
+  const messages = useMessages();
+
   return (
-    <div className="toolbar" role="toolbar" aria-label="Acciones del documento">
-      <button type="button" onClick={onFormat} disabled={isDisabled} title="Ctrl/Cmd + Shift + F">
-        Formatear
+    <div className="toolbar" role="toolbar" aria-label={messages.documentActions}>
+      <button type="button" onClick={onFormat} disabled={isDisabled} title={messages.shortcut('F')}>
+        {messages.format}
       </button>
-      <button type="button" onClick={onMinify} disabled={isDisabled} title="Ctrl/Cmd + Shift + M">
-        Minificar
-      </button>
-      <button type="button" onClick={onSortKeys} disabled={isDisabled} title="Ctrl/Cmd + Shift + O">
-        Ordenar claves
+      <button type="button" onClick={onMinify} disabled={isDisabled} title={messages.shortcut('M')}>
+        {messages.minify}
       </button>
       <button
         type="button"
-        onClick={onShare}
+        onClick={onSortKeys}
         disabled={isDisabled}
-        title="El enlace lleva el documento en el fragmento, que nunca llega al servidor"
+        title={messages.shortcut('O')}
       >
-        Compartir enlace
+        {messages.sortKeys}
+      </button>
+      <button type="button" onClick={onShare} disabled={isDisabled} title={messages.shareLinkHint}>
+        {messages.shareLink}
       </button>
     </div>
   );

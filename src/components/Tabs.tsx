@@ -1,5 +1,6 @@
 import type { DocumentEntry } from '../lib/document-store';
 import { formatBytes } from '../lib/format';
+import { useMessages } from '../lib/i18n';
 
 interface TabsProps {
   entries: readonly DocumentEntry[];
@@ -10,10 +11,11 @@ interface TabsProps {
 }
 
 export function Tabs({ entries, activeId, onOpen, onClose, onClearAll }: TabsProps) {
+  const messages = useMessages();
   if (entries.length === 0) return null;
 
   return (
-    <div className="tabs" role="tablist" aria-label="Documentos recientes">
+    <div className="tabs" role="tablist" aria-label={messages.recentDocuments}>
       {entries.map((entry) => (
         <span key={entry.id} className={entry.id === activeId ? 'tab tab--active' : 'tab'}>
           <button
@@ -31,7 +33,7 @@ export function Tabs({ entries, activeId, onOpen, onClose, onClearAll }: TabsPro
           <button
             type="button"
             className="tab__close"
-            aria-label={`Olvidar ${entry.name}`}
+            aria-label={messages.forget(entry.name)}
             onClick={() => {
               onClose(entry.id);
             }}
@@ -41,7 +43,7 @@ export function Tabs({ entries, activeId, onOpen, onClose, onClearAll }: TabsPro
         </span>
       ))}
       <button type="button" className="tabs__clear" onClick={onClearAll}>
-        Borrar guardados
+        {messages.clearSaved}
       </button>
     </div>
   );

@@ -43,8 +43,8 @@ export default defineConfig({
       manifest: {
         name: 'Jsonium',
         short_name: 'Jsonium',
-        description: 'Banco de trabajo JSON local. Cero red.',
-        lang: 'es',
+        description: 'Local-first JSON workbench. Zero network.',
+        lang: 'en',
         theme_color: THEME_COLOR,
         background_color: THEME_COLOR,
         display: 'standalone',

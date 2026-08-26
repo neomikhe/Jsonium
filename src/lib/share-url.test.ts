@@ -32,13 +32,13 @@ describe('share-url', () => {
 
   it('rechaza el texto vacio', () => {
     expect(encodeShare('   ').hash).toBeNull();
-    expect(encodeShare('   ').reason).toBe('No hay nada que compartir');
+    expect(encodeShare('   ').failure).toBe('empty');
   });
 
   it('rechaza lo que no cabe en una URL', () => {
     const huge = 'x'.repeat(SHARE_MAX_CHARS + 1);
     expect(encodeShare(huge).hash).toBeNull();
-    expect(encodeShare(huge).reason).toContain('demasiado grande');
+    expect(encodeShare(huge).failure).toBe('tooLarge');
   });
 
   it('ignora hashes ajenos o corruptos', () => {

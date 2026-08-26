@@ -83,7 +83,7 @@ function openDatabase(): Promise<IDBDatabase> {
       resolve(open.result);
     };
     open.onerror = () => {
-      reject(open.error ?? new Error('No se pudo abrir IndexedDB'));
+      reject(open.error ?? new Error('indexeddb-open-failed'));
     };
   });
 }
@@ -111,7 +111,7 @@ function requestOf<T>(request: IDBRequest<T>): Promise<T> {
       resolve(request.result);
     };
     request.onerror = () => {
-      reject(request.error ?? new Error('Fallo una lectura de IndexedDB'));
+      reject(request.error ?? new Error('indexeddb-read-failed'));
     };
   });
 }
@@ -122,7 +122,7 @@ function completionOf(transaction: IDBTransaction): Promise<void> {
       resolve();
     };
     transaction.onabort = () => {
-      reject(transaction.error ?? new Error('Se abortó una escritura en IndexedDB'));
+      reject(transaction.error ?? new Error('indexeddb-write-aborted'));
     };
   });
 }

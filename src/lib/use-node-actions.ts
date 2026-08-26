@@ -2,6 +2,8 @@ import { useCallback } from 'react';
 import { messageOf } from '../core/error-message';
 import type { NodeSummary } from '../core/types';
 import type { DocumentClient } from './document-client';
+import { describeFailure } from './describe-failure';
+import { useMessages } from './i18n';
 import { useClipboard } from './use-clipboard';
 
 interface NodeActions {
@@ -14,19 +16,20 @@ interface NodeActions {
 
 export function useNodeActions(client: DocumentClient): NodeActions {
   const { hint, copy, notify } = useClipboard();
+  const messages = useMessages();
 
   const copyPath = useCallback(
     (node: NodeSummary) => {
       void client
         .path(node.id)
         .then((path) => {
-          copy(path, 'Ruta copiada al portapapeles');
+          copy(path, messages.pathCopied);
         })
         .catch((cause: unknown) => {
-          notify(messageOf(cause));
+          notify(describeFailure(messages, messageOf(cause)));
         });
     },
-    [client, copy, notify],
+    [client, copy, notify, messages],
   );
 
   const copyValue = useCallback(
@@ -34,13 +37,13 @@ export function useNodeActions(client: DocumentClient): NodeActions {
       void client
         .value(node.id)
         .then((value) => {
-          copy(value, 'Valor copiado al portapapeles');
+          copy(value, messages.valueCopied);
         })
         .catch((cause: unknown) => {
-          notify(messageOf(cause));
+          notify(describeFailure(messages, messageOf(cause)));
         });
     },
-    [client, copy, notify],
+    [client, copy, notify, messages],
   );
 
   return { hint, copyPath, copyValue, copyText: copy, notify };

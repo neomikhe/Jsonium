@@ -1,7 +1,10 @@
 import { createContext, useContext } from 'react';
 import type { JsonKind } from '../core/types';
 import type { LossKind } from '../core/convert';
+import type { PaneMode } from './pane-mode';
+import type { FailureCode } from '../core/failure';
 import type { RepairKind } from '../core/repair';
+import type { ShareFailure } from './share-url';
 
 export type Locale = 'es' | 'en';
 
@@ -10,6 +13,7 @@ export interface Messages {
   tagline: string;
   oversize: (limit: string) => string;
 
+  documentActions: string;
   format: string;
   minify: string;
   sortKeys: string;
@@ -37,11 +41,7 @@ export interface Messages {
   kind: Record<JsonKind, string>;
 
   documentView: string;
-  treeMode: string;
-  queryMode: string;
-  diffMode: string;
-  convertMode: string;
-  validateMode: string;
+  mode: Record<PaneMode, string>;
   parsing: (name: string) => string;
   parseFailed: (name: string, error: string) => string;
 
@@ -94,15 +94,21 @@ export interface Messages {
   violationsLabel: string;
   rule: Record<string, string>;
 
+  failure: Record<FailureCode, string>;
+
   repair: string;
   repairApplied: string;
   repairKind: Record<RepairKind, string>;
 
+  clipboardBlocked: string;
+  storageUnavailable: string;
   pathCopied: string;
   valueCopied: string;
   conversionCopied: string;
   linkCopied: string;
-  nothingToShare: string;
+  shareFailure: Record<ShareFailure, string>;
+  language: string;
+  switchLanguage: string;
   sharedName: string;
 }
 
@@ -112,6 +118,7 @@ const ES: Messages = {
   oversize: (limit) =>
     `El editor y el guardado automatico se desactivan por encima de ${limit}: mantener tanto texto en el hilo principal congelaria la interfaz. Navega el documento con el arbol.`,
 
+  documentActions: 'Acciones del documento',
   format: 'Formatear',
   minify: 'Minificar',
   sortKeys: 'Ordenar claves',
@@ -146,11 +153,13 @@ const ES: Messages = {
   },
 
   documentView: 'Vista del documento',
-  treeMode: 'Arbol',
-  queryMode: 'Consultar',
-  diffMode: 'Diff',
-  convertMode: 'Convertir',
-  validateMode: 'Validar',
+  mode: {
+    tree: 'Arbol',
+    query: 'Consultar',
+    diff: 'Diff',
+    convert: 'Convertir',
+    validate: 'Validar',
+  },
   parsing: (name) => `Parseando ${name}...`,
   parseFailed: (name, error) => `No se pudo parsear ${name}: ${error}`,
 
@@ -234,6 +243,26 @@ const ES: Messages = {
     oneOf: 'no cumple exactamente una rama',
   },
 
+  failure: {
+    'document-missing': 'No hay ningun documento cargado',
+    'document-too-large': 'El documento es demasiado grande para volver al editor',
+    'compare-missing': 'Falta el documento con el que comparar',
+    'node-unknown': 'Nodo desconocido',
+    'value-too-large': 'El valor supera el limite permitido para copiarlo',
+    'toml-root': 'TOML exige un objeto en la raiz',
+    'csv-root': 'CSV necesita un array de filas en la raiz',
+    'circular-reference':
+      'El documento tiene referencias circulares y JSON no puede representarlas',
+    'query-empty': 'La consulta esta vacia',
+    'query-root': 'La consulta debe empezar por $',
+    'query-separator': 'Se esperaba . o [ en la posicion',
+    'query-name-dot': 'Falta el nombre despues del punto',
+    'query-name-descend': 'Falta el nombre despues de ..',
+    'query-bracket': 'Falta el corchete de cierre',
+    'query-index': 'Indice no valido',
+    'query-bound': 'Limite no valido',
+  },
+
   repair: 'Reparar',
   repairApplied: 'Correcciones aplicadas',
   repairKind: {
@@ -245,11 +274,19 @@ const ES: Messages = {
     literal: 'literales no JSON',
   },
 
+  clipboardBlocked: 'El navegador bloqueo el portapapeles',
+  storageUnavailable:
+    'El navegador no deja guardar documentos: las pestañas no sobreviviran a la recarga.',
   pathCopied: 'Ruta copiada al portapapeles',
   valueCopied: 'Valor copiado al portapapeles',
   conversionCopied: 'Conversion copiada al portapapeles',
   linkCopied: 'Enlace copiado. El fragmento nunca llega al servidor.',
-  nothingToShare: 'No hay nada que compartir',
+  shareFailure: {
+    empty: 'No hay nada que compartir',
+    tooLarge: 'El documento es demasiado grande para caber en una URL',
+  },
+  language: 'ES',
+  switchLanguage: 'Cambiar a ingles',
   sharedName: 'compartido.json',
 };
 
@@ -259,6 +296,7 @@ const EN: Messages = {
   oversize: (limit) =>
     `The editor and autosave switch off above ${limit}: holding that much text on the main thread would freeze the tab. Use the tree to navigate the document.`,
 
+  documentActions: 'Document actions',
   format: 'Format',
   minify: 'Minify',
   sortKeys: 'Sort keys',
@@ -293,11 +331,13 @@ const EN: Messages = {
   },
 
   documentView: 'Document view',
-  treeMode: 'Tree',
-  queryMode: 'Query',
-  diffMode: 'Diff',
-  convertMode: 'Convert',
-  validateMode: 'Validate',
+  mode: {
+    tree: 'Tree',
+    query: 'Query',
+    diff: 'Diff',
+    convert: 'Convert',
+    validate: 'Validate',
+  },
   parsing: (name) => `Parsing ${name}...`,
   parseFailed: (name, error) => `Could not parse ${name}: ${error}`,
 
@@ -381,6 +421,25 @@ const EN: Messages = {
     oneOf: 'does not satisfy exactly one branch',
   },
 
+  failure: {
+    'document-missing': 'No document is loaded',
+    'document-too-large': 'The document is too large to bring back into the editor',
+    'compare-missing': 'The document to compare against is missing',
+    'node-unknown': 'Unknown node',
+    'value-too-large': 'The value is past the limit allowed for copying',
+    'toml-root': 'TOML requires an object at the root',
+    'csv-root': 'CSV needs an array of rows at the root',
+    'circular-reference': 'The document has circular references and JSON cannot represent them',
+    'query-empty': 'The query is empty',
+    'query-root': 'The query must start with $',
+    'query-separator': 'Expected . or [ at position',
+    'query-name-dot': 'A name is missing after the dot',
+    'query-name-descend': 'A name is missing after ..',
+    'query-bracket': 'The closing bracket is missing',
+    'query-index': 'Invalid index',
+    'query-bound': 'Invalid bound',
+  },
+
   repair: 'Repair',
   repairApplied: 'Fixes applied',
   repairKind: {
@@ -392,11 +451,18 @@ const EN: Messages = {
     literal: 'non-JSON literals',
   },
 
+  clipboardBlocked: 'The browser blocked the clipboard',
+  storageUnavailable: 'The browser refuses to store documents: tabs will not survive a reload.',
   pathCopied: 'Path copied to the clipboard',
   valueCopied: 'Value copied to the clipboard',
   conversionCopied: 'Conversion copied to the clipboard',
   linkCopied: 'Link copied. The fragment never reaches a server.',
-  nothingToShare: 'There is nothing to share',
+  shareFailure: {
+    empty: 'There is nothing to share',
+    tooLarge: 'The document is too large to fit in a URL',
+  },
+  language: 'EN',
+  switchLanguage: 'Switch to Spanish',
   sharedName: 'shared.json',
 };
 
@@ -406,7 +472,6 @@ export function detectLocale(): Locale {
   return navigator.language.toLowerCase().startsWith('es') ? 'es' : 'en';
 }
 
-// El conmutador de idioma llega cuando todos los componentes usen el catalogo (DOCS §12)
 export const MessagesContext = createContext<Messages>(ES);
 
 export function useMessages(): Messages {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DocumentPane } from './components/DocumentPane';
-import type { PaneMode } from './components/DocumentPane';
+import type { PaneMode } from './lib/pane-mode';
 import { DropZone } from './components/DropZone';
 import { EditorPane } from './components/EditorPane';
 import { StatsPanel } from './components/StatsPanel';
@@ -17,6 +17,8 @@ import type { DocumentStats, NodeSummary } from './core/types';
 import { formatBytes } from './lib/format';
 import { downloadText } from './lib/download';
 import { decodeShare, encodeShare } from './lib/share-url';
+import { MessagesContext } from './lib/i18n';
+import { useLocale } from './lib/use-locale';
 import { useDocument } from './lib/use-document';
 import { useEditorText } from './lib/use-editor-text';
 import { useJsonTree } from './lib/use-json-tree';
@@ -30,6 +32,7 @@ import { useTabs } from './lib/use-tabs';
 import { useValidate } from './lib/use-validate';
 
 export function App() {
+  const { messages, toggle: toggleLocale } = useLocale();
   const { client, status, openFile, applyText } = useDocument();
   const root = status.state === 'ready' ? status.result.root : null;
   const { rows, expanded, toggle } = useJsonTree(client, root);
@@ -56,8 +59,8 @@ export function App() {
     if (shared === null) return;
     sharedRef.current = true;
     editor.loadText(shared);
-    void applyText(shared, 'compartido.json');
-  }, [editor, applyText]);
+    void applyText(shared, messages.sharedName);
+  }, [editor, applyText, messages]);
 
   const requestStats = useCallback(() => {
     void client
@@ -91,17 +94,14 @@ export function App() {
   }, [canEdit, applyOptions]);
 
   const share = useCallback(() => {
-    const { hash, reason } = encodeShare(editor.text);
+    const { hash, failure } = encodeShare(editor.text);
     if (hash === null) {
-      notify(reason ?? 'No se pudo compartir');
+      notify(messages.shareFailure[failure ?? 'empty']);
       return;
     }
     const { origin, pathname } = window.location;
-    copyText(
-      `${origin}${pathname}${hash}`,
-      'Enlace copiado. El fragmento nunca llega al servidor.',
-    );
-  }, [editor.text, copyText, notify]);
+    copyText(`${origin}${pathname}${hash}`, messages.linkCopied);
+  }, [editor.text, copyText, notify, messages]);
 
   useShortcuts([
     { key: 'f', run: format },
@@ -155,90 +155,98 @@ export function App() {
   const mainClass = editor.isEditable ? 'app__main' : 'app__main app__main--single';
 
   return (
-    <div className="app">
-      <header className="app__header">
-        <h1 className="app__title">Jsonium</h1>
-        <p className="app__tagline">Banco de trabajo JSON local. Cero red.</p>
-        <DropZone onFile={handleFile} isCompact />
-      </header>
+    <MessagesContext.Provider value={messages}>
+      <div className="app">
+        <header className="app__header">
+          <h1 className="app__title">Jsonium</h1>
+          <p className="app__tagline">{messages.tagline}</p>
+          <DropZone onFile={handleFile} isCompact />
+          <button
+            type="button"
+            className="app__locale"
+            title={messages.switchLanguage}
+            onClick={toggleLocale}
+          >
+            {messages.language}
+          </button>
+        </header>
 
-      <Tabs
-        entries={tabs.entries}
-        activeId={tabs.activeId}
-        onOpen={openTab}
-        onClose={tabs.close}
-        onClearAll={tabs.clearAll}
-      />
-
-      <Toolbar
-        isDisabled={!canEdit}
-        onFormat={format}
-        onMinify={minify}
-        onSortKeys={sortKeys}
-        onShare={share}
-      />
-
-      {status.state === 'ready' && (
-        <StatusBar
-          name={status.name}
-          result={status.result}
-          stats={stats}
-          onRequestStats={requestStats}
+        <Tabs
+          entries={tabs.entries}
+          activeId={tabs.activeId}
+          onOpen={openTab}
+          onClose={tabs.close}
+          onClearAll={tabs.clearAll}
         />
-      )}
 
-      {stats !== null && <StatsPanel stats={stats} />}
+        <Toolbar
+          isDisabled={!canEdit}
+          onFormat={format}
+          onMinify={minify}
+          onSortKeys={sortKeys}
+          onShare={share}
+        />
 
-      {!editor.isEditable && (
-        <p className="notice notice--slim">
-          El editor y el guardado automatico se desactivan por encima de{' '}
-          {formatBytes(EDITOR_MAX_BYTES)}: mantener tanto texto en el hilo principal congelaria la
-          interfaz. Navega el documento con el arbol.
-        </p>
-      )}
-
-      <main className={mainClass}>
-        {editor.isEditable && (
-          <EditorPane
-            text={editor.text}
-            error={editor.error}
-            fixes={editor.fixes}
-            canRepair={editor.canRepair}
-            reveal={reveal}
-            onChange={editor.handleChange}
-            onRepair={editor.applyRepair}
+        {status.state === 'ready' && (
+          <StatusBar
+            name={status.name}
+            result={status.result}
+            stats={stats}
+            onRequestStats={requestStats}
           />
         )}
-        <section className="pane">
-          <DocumentPane
-            status={status}
-            rows={rows}
-            expanded={expanded}
-            search={search}
-            diff={diffState}
-            convert={convertState}
-            query={queryState}
-            validate={validateState}
-            mode={mode}
-            onModeChange={setMode}
-            actions={{
-              onToggle: toggle,
-              onCopyPath: copyPath,
-              onCopyValue: copyValue,
-              onCopyText: copyText,
-              onReveal: revealNode,
-            }}
-            onFile={handleFile}
-            onRevealPath={revealPath}
-            onExportDiff={exportDiff}
-            onDownload={downloadConversion}
-          />
-        </section>
-      </main>
 
-      <output className="hint" aria-live="polite">
-        {hint ?? ''}
-      </output>
-    </div>
+        {tabs.hasFailed && <p className="notice notice--slim">{messages.storageUnavailable}</p>}
+
+        {stats !== null && <StatsPanel stats={stats} />}
+
+        {!editor.isEditable && (
+          <p className="notice notice--slim">{messages.oversize(formatBytes(EDITOR_MAX_BYTES))}</p>
+        )}
+
+        <main className={mainClass}>
+          {editor.isEditable && (
+            <EditorPane
+              text={editor.text}
+              error={editor.error}
+              fixes={editor.fixes}
+              canRepair={editor.canRepair}
+              reveal={reveal}
+              onChange={editor.handleChange}
+              onRepair={editor.applyRepair}
+            />
+          )}
+          <section className="pane">
+            <DocumentPane
+              status={status}
+              rows={rows}
+              expanded={expanded}
+              search={search}
+              diff={diffState}
+              convert={convertState}
+              query={queryState}
+              validate={validateState}
+              mode={mode}
+              onModeChange={setMode}
+              actions={{
+                onToggle: toggle,
+                onCopyPath: copyPath,
+                onCopyValue: copyValue,
+                onCopyText: copyText,
+                onReveal: revealNode,
+              }}
+              onFile={handleFile}
+              onRevealPath={revealPath}
+              onExportDiff={exportDiff}
+              onDownload={downloadConversion}
+            />
+          </section>
+        </main>
+
+        <output className="hint" aria-live="polite">
+          {hint ?? ''}
+        </output>
+      </div>
+    </MessagesContext.Provider>
   );
 }

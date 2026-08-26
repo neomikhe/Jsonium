@@ -2,6 +2,7 @@ import { VList } from 'virtua';
 import type { ValidationResult } from '../core/validate-schema';
 import { formatCount, formatDuration } from '../lib/format';
 import { useMessages } from '../lib/i18n';
+import { describeFailure } from '../lib/describe-failure';
 import { DropZone } from './DropZone';
 
 interface ValidatePanelProps {
@@ -16,24 +17,25 @@ interface ValidatePanelProps {
 
 export function ValidatePanel(props: ValidatePanelProps) {
   const { schemaName, result, error, isRunning, onFile, onClear, onReveal } = props;
+  const messages = useMessages();
 
   if (schemaName === null) {
-    return <DropZone onFile={onFile} label="Suelta un JSON Schema para validar" />;
+    return <DropZone onFile={onFile} label={messages.dropSchema} />;
   }
 
   return (
     <>
       <div className="diff__bar">
         <span className="diff__name" title={schemaName}>
-          contra {schemaName}
+          {messages.against(schemaName)}
         </span>
         <button type="button" className="diff__clear" onClick={onClear}>
-          Quitar
+          {messages.remove}
         </button>
       </div>
 
-      {error !== null && <p className="notice notice--error">{error}</p>}
-      {isRunning && <p className="notice">Validando...</p>}
+      {error !== null && <p className="notice notice--error">{describeFailure(messages, error)}</p>}
+      {isRunning && <p className="notice">{messages.validating}</p>}
       {result !== null && !isRunning && <Findings result={result} onReveal={onReveal} />}
     </>
   );
@@ -47,27 +49,27 @@ interface FindingsProps {
 function Findings({ result, onReveal }: FindingsProps) {
   const messages = useMessages();
   if (result.isValid) {
-    return <p className="notice notice--ok">El documento cumple el esquema.</p>;
+    return <p className="notice notice--ok">{messages.documentValid}</p>;
   }
 
   return (
     <>
       <p className="diff__summary">
         <span className="diff__stat diff__stat--removed">
-          {formatCount(result.errors.length)} incumplimientos
+          {messages.violations(formatCount(result.errors.length))}
         </span>
         <span className="diff__time">
-          {result.isTruncated ? 'limite alcanzado · ' : ''}
+          {result.isTruncated ? `${messages.limitReached} · ` : ''}
           {formatDuration(result.scanMs)}
         </span>
       </p>
-      <VList className="tree" role="list" aria-label="Incumplimientos del esquema">
+      <VList className="tree" role="list" aria-label={messages.violationsLabel}>
         {result.errors.map((finding, index) => (
           <button
             key={`${finding.keyword}:${finding.path}:${index.toString()}`}
             type="button"
             className="hit"
-            title="Mostrar en el editor"
+            title={messages.showInEditor}
             onClick={() => {
               onReveal(finding.path);
             }}
