@@ -1,4 +1,5 @@
 import { childrenOf } from '../core/children';
+import { generateTypes } from '../core/codegen';
 import { analyzeConversion } from '../core/convert';
 import type { ConvertOutput } from '../core/convert';
 import { diff } from '../core/diff';
@@ -36,6 +37,7 @@ type ConvertRequest = Extract<WorkerRequest, { type: 'convert' }>;
 type QueryRequest = Extract<WorkerRequest, { type: 'query' }>;
 type ImportRequest = Extract<WorkerRequest, { type: 'importFile' }>;
 type ValidateRequest = Extract<WorkerRequest, { type: 'validate' }>;
+type CodegenRequest = Extract<WorkerRequest, { type: 'codegen' }>;
 
 // lib.dom no describe el scope de un worker: se acota a lo que realmente usamos
 const scope = globalThis as unknown as WorkerScope;
@@ -90,6 +92,10 @@ async function runValidate(request: ValidateRequest): Promise<ReturnType<typeof 
   const document = requireMain();
   const schema: unknown = JSON.parse(await request.file.text());
   return validateSchema(document, schema, request.limit);
+}
+
+function runCodegen(request: CodegenRequest): string {
+  return generateTypes(inferSchema(requireMain()).schema, request.language);
 }
 
 function parseCompare(text: string, sizeBytes: number): CompareResult {
@@ -205,6 +211,8 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'inferSchema', result: inferSchema(requireMain()) };
     case 'validate':
       return { id, ok: true, type: 'validate', result: await runValidate(request) };
+    case 'codegen':
+      return { id, ok: true, type: 'codegen', result: runCodegen(request) };
     case 'stats':
       return { id, ok: true, type: 'stats', result: computeStats(requireMain()) };
   }

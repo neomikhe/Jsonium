@@ -8,6 +8,7 @@ import { StatusBar } from './components/StatusBar';
 import { Tabs } from './components/Tabs';
 import { Toolbar } from './components/Toolbar';
 import { EDITOR_MAX_BYTES, INDENT_SPACES } from './core/limits';
+import { extensionFor } from './lib/use-convert';
 import type { OutputFormat } from './lib/use-convert';
 import type { DiffResult } from './core/diff';
 import { locatePath } from './core/locate';
@@ -109,7 +110,7 @@ export function App() {
   }, []);
 
   const downloadConversion = useCallback((text: string, format: OutputFormat) => {
-    downloadText(text, format === 'schema' ? 'jsonium.schema.json' : `jsonium.${format}`);
+    downloadText(text, `jsonium.${extensionFor(format)}`);
   }, []);
 
   const openTab = useCallback(

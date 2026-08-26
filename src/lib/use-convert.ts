@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { Language } from '../core/codegen';
 import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import { messageOf } from '../core/error-message';
 import type { InferResult } from '../core/infer-schema';
@@ -6,7 +7,29 @@ import { INDENT_SPACES } from '../core/limits';
 import type { DocumentClient } from './document-client';
 import type { DocumentStatus } from './use-document';
 
-export type OutputFormat = ConvertFormat | 'schema';
+export type OutputFormat = ConvertFormat | 'schema' | Language;
+
+const LANGUAGES: ReadonlySet<string> = new Set<Language>([
+  'typescript',
+  'go',
+  'python',
+  'rust',
+]);
+
+const EXTENSIONS: Record<string, string> = {
+  yaml: 'yaml',
+  toml: 'toml',
+  csv: 'csv',
+  schema: 'schema.json',
+  typescript: 'ts',
+  go: 'go',
+  python: 'py',
+  rust: 'rs',
+};
+
+export function extensionFor(format: OutputFormat): string {
+  return EXTENSIONS[format] ?? 'txt';
+}
 
 interface ConvertState {
   format: OutputFormat;
@@ -53,8 +76,13 @@ export function useConvert(
 }
 
 function produce(client: DocumentClient, format: OutputFormat): Promise<ConvertOutput> {
-  if (format !== 'schema') return client.convert(format);
-  return client.inferSchema().then(toSchemaOutput);
+  if (format === 'schema') return client.inferSchema().then(toSchemaOutput);
+  if (LANGUAGES.has(format)) return client.codegen(format as Language).then(toPlainOutput);
+  return client.convert(format as ConvertFormat);
+}
+
+function toPlainOutput(text: string): ConvertOutput {
+  return { text, losses: [], failure: null };
 }
 
 function toSchemaOutput(result: InferResult): ConvertOutput {

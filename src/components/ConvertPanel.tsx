@@ -3,7 +3,18 @@ import type { OutputFormat } from '../lib/use-convert';
 import { CONVERT_PREVIEW_CHARS } from '../core/limits';
 import { formatCount } from '../lib/format';
 
-const FORMATS: readonly OutputFormat[] = ['yaml', 'toml', 'csv', 'schema'];
+const DATA_FORMATS: readonly OutputFormat[] = ['yaml', 'toml', 'csv', 'schema'];
+const CODE_FORMATS: readonly OutputFormat[] = ['typescript', 'go', 'python', 'rust'];
+const LABELS: Record<string, string> = {
+  yaml: 'YAML',
+  toml: 'TOML',
+  csv: 'CSV',
+  schema: 'SCHEMA',
+  typescript: 'TS',
+  go: 'Go',
+  python: 'Python',
+  rust: 'Rust',
+};
 
 interface ConvertPanelProps {
   format: OutputFormat;
@@ -21,7 +32,7 @@ export function ConvertPanel(props: ConvertPanelProps) {
   return (
     <>
       <div className="convert__bar">
-        {FORMATS.map((candidate) => (
+        {[...DATA_FORMATS, ...CODE_FORMATS].map((candidate) => (
           <button
             key={candidate}
             type="button"
@@ -30,7 +41,7 @@ export function ConvertPanel(props: ConvertPanelProps) {
               onFormatChange(candidate);
             }}
           >
-            {candidate.toUpperCase()}
+            {LABELS[candidate] ?? candidate}
           </button>
         ))}
         {output !== null && (
