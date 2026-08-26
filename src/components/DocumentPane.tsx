@@ -1,4 +1,5 @@
-import type { ConvertFormat, ConvertOutput } from '../core/convert';
+import type { ConvertOutput } from '../core/convert';
+import type { OutputFormat } from '../lib/use-convert';
 import type { DiffResult } from '../core/diff';
 import type { QueryResult } from '../core/jsonpath';
 import type { SearchResult } from '../core/search';
@@ -34,11 +35,11 @@ export interface DiffBinding {
 }
 
 export interface ConvertBinding {
-  format: ConvertFormat;
+  format: OutputFormat;
   output: ConvertOutput | null;
   error: string | null;
   isRunning: boolean;
-  setFormat: (format: ConvertFormat) => void;
+  setFormat: (format: OutputFormat) => void;
 }
 
 export interface QueryBinding {
@@ -71,7 +72,7 @@ interface DocumentPaneProps {
   onFile: (file: File) => void;
   onRevealPath: (path: string) => void;
   onExportDiff: (result: DiffResult) => void;
-  onDownload: (text: string, format: ConvertFormat) => void;
+  onDownload: (text: string, format: OutputFormat) => void;
 }
 
 export function DocumentPane(props: DocumentPaneProps) {

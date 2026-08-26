@@ -8,7 +8,7 @@ import { StatusBar } from './components/StatusBar';
 import { Tabs } from './components/Tabs';
 import { Toolbar } from './components/Toolbar';
 import { EDITOR_MAX_BYTES, INDENT_SPACES } from './core/limits';
-import type { ConvertFormat } from './core/convert';
+import type { OutputFormat } from './lib/use-convert';
 import type { DiffResult } from './core/diff';
 import { locatePath } from './core/locate';
 import type { Span } from './core/locate';
@@ -106,8 +106,8 @@ export function App() {
     downloadText(JSON.stringify(result, null, INDENT_SPACES), 'jsonium-diff.json');
   }, []);
 
-  const downloadConversion = useCallback((text: string, format: ConvertFormat) => {
-    downloadText(text, `jsonium.${format}`);
+  const downloadConversion = useCallback((text: string, format: OutputFormat) => {
+    downloadText(text, format === 'schema' ? 'jsonium.schema.json' : `jsonium.${format}`);
   }, []);
 
   const openTab = useCallback(

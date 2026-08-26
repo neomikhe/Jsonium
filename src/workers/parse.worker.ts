@@ -3,6 +3,7 @@ import { analyzeConversion } from '../core/convert';
 import type { ConvertOutput } from '../core/convert';
 import { diff } from '../core/diff';
 import { messageOf } from '../core/error-message';
+import { inferSchema } from '../core/infer-schema';
 import { queryPath } from '../core/jsonpath';
 import { COPY_MAX_CHARS, EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
 import { NodeRegistry } from '../core/node-registry';
@@ -192,6 +193,8 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'importFile', result: await runImport(request) };
     case 'query':
       return { id, ok: true, type: 'query', result: runQuery(request) };
+    case 'inferSchema':
+      return { id, ok: true, type: 'inferSchema', result: inferSchema(requireMain()) };
     case 'stats':
       return { id, ok: true, type: 'stats', result: computeStats(requireMain()) };
   }

@@ -1,5 +1,6 @@
 import type { ConvertFormat, ConvertOutput } from './convert';
 import type { DiffOptions, DiffResult } from './diff';
+import type { InferResult } from './infer-schema';
 import type { QueryResult } from './jsonpath';
 import type { RepairResult } from './repair';
 import type { SearchResult } from './search';
@@ -22,6 +23,7 @@ export type WorkerRequest =
   | { id: number; type: 'convert'; format: ConvertFormat }
   | { id: number; type: 'importFile'; file: File; format: ConvertFormat }
   | { id: number; type: 'query'; expression: string; limit: number }
+  | { id: number; type: 'inferSchema' }
   | { id: number; type: 'stats' };
 
 export interface CompareResult {
@@ -43,6 +45,7 @@ export type WorkerResponse =
   | { id: number; ok: true; type: 'convert'; result: ConvertOutput }
   | { id: number; ok: true; type: 'importFile'; result: ParseResult }
   | { id: number; ok: true; type: 'query'; result: QueryResult }
+  | { id: number; ok: true; type: 'inferSchema'; result: InferResult }
   | { id: number; ok: true; type: 'stats'; result: DocumentStats }
   | { id: number; ok: false; error: string };
 
@@ -62,6 +65,7 @@ const REQUEST_TYPES: ReadonlySet<string> = new Set<RequestType>([
   'convert',
   'importFile',
   'query',
+  'inferSchema',
   'stats',
 ]);
 

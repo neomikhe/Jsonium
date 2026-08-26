@@ -16,7 +16,8 @@ export type LossKind =
   | 'csvRowNotObject'
   | 'csvNestedValue'
   | 'csvRaggedRows'
-  | 'csvTypesLost';
+  | 'csvTypesLost'
+  | 'schemaTruncated';
 
 export interface ConvertOutput {
   text: string;

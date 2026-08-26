@@ -1,5 +1,6 @@
 import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import type { DiffOptions, DiffResult } from '../core/diff';
+import type { InferResult } from '../core/infer-schema';
 import type { QueryResult } from '../core/jsonpath';
 import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import type { RepairResult } from '../core/repair';
@@ -83,6 +84,10 @@ export class DocumentClient {
 
   query(expression: string, limit: number): Promise<QueryResult> {
     return this.send<QueryResult>((id) => ({ id, type: 'query', expression, limit }));
+  }
+
+  inferSchema(): Promise<InferResult> {
+    return this.send<InferResult>((id) => ({ id, type: 'inferSchema' }));
   }
 
   stats(): Promise<DocumentStats> {

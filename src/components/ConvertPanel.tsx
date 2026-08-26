@@ -1,17 +1,18 @@
-import type { ConvertFormat, ConvertOutput } from '../core/convert';
+import type { ConvertOutput } from '../core/convert';
+import type { OutputFormat } from '../lib/use-convert';
 import { CONVERT_PREVIEW_CHARS } from '../core/limits';
 import { formatCount } from '../lib/format';
 
-const FORMATS: readonly ConvertFormat[] = ['yaml', 'toml', 'csv'];
+const FORMATS: readonly OutputFormat[] = ['yaml', 'toml', 'csv', 'schema'];
 
 interface ConvertPanelProps {
-  format: ConvertFormat;
+  format: OutputFormat;
   output: ConvertOutput | null;
   error: string | null;
   isRunning: boolean;
-  onFormatChange: (format: ConvertFormat) => void;
+  onFormatChange: (format: OutputFormat) => void;
   onCopy: (text: string) => void;
-  onDownload: (text: string, format: ConvertFormat) => void;
+  onDownload: (text: string, format: OutputFormat) => void;
 }
 
 export function ConvertPanel(props: ConvertPanelProps) {

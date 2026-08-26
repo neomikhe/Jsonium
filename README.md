@@ -36,7 +36,7 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **74.5 kB** |
+| Initial bundle (gzip) | **74.7 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
@@ -97,6 +97,8 @@ or a general-purpose "everything" toolbox.
   `$[0:5]`. Filters like `[?(@.price < 10)]` are deliberately not supported yet — that is the part
   most implementations solve with `eval`
 - **Document statistics**: node count, max depth, and a histogram of value types
+- **Infer a JSON Schema** (draft-07) from the document: array elements merge into one `items`, and a
+  key counts as required only when every sibling object has it
 - **Convert to YAML, TOML or CSV** — and it tells you what each format silently loses: TOML has no
   null, and CSV turns nested values into JSON text that comes back as a string
 - **Open YAML, TOML and CSV files** directly; they are converted to JSON on the way in
@@ -123,7 +125,8 @@ tab — and the tree becomes the way to navigate the document.
 | 3 | Offline PWA, keyboard shortcuts | ✅ done |
 | 3 | v0.1.0 release | next |
 | 4 | JSONPath playground | ✅ done |
-| 4 | jq (WASM), JSON Schema validation and inference | planned |
+| 4 | JSON Schema inference | ✅ done |
+| 4 | jq (WASM), JSON Schema validation | planned |
 | 5 | Type generation (TypeScript, Go, Rust, Python…), mocks, URL sharing via `#fragment` | planned |
 
 ## Getting started
@@ -202,7 +205,7 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **74,5 kB** |
+| Bundle inicial (gzip) | **74,7 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
@@ -241,6 +244,8 @@ de 5 MB no se guarda nada.
   `[?(@.precio < 10)]` no están soportados a propósito: son la parte que casi todas las
   implementaciones resuelven con `eval`
 - **Estadísticas**: número de nodos, profundidad máxima e histograma de tipos
+- **Inferir un JSON Schema** (draft-07) del documento: los elementos de un array se fusionan en un
+  solo `items`, y una clave solo cuenta como requerida si la tienen todos los objetos hermanos
 - **Convertir a YAML, TOML o CSV**, avisando de lo que cada formato pierde en silencio: TOML no
   tiene null, y CSV convierte lo anidado en texto JSON que vuelve como cadena
 - **Abrir archivos YAML, TOML y CSV** directamente: se convierten a JSON al entrar
