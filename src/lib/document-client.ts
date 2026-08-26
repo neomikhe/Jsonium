@@ -2,6 +2,7 @@ import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import type { DiffOptions, DiffResult } from '../core/diff';
 import type { InferResult } from '../core/infer-schema';
 import type { QueryResult } from '../core/jsonpath';
+import type { ValidationResult } from '../core/validate-schema';
 import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import type { RepairResult } from '../core/repair';
 import type { SearchResult } from '../core/search';
@@ -88,6 +89,10 @@ export class DocumentClient {
 
   inferSchema(): Promise<InferResult> {
     return this.send<InferResult>((id) => ({ id, type: 'inferSchema' }));
+  }
+
+  validate(file: File, limit: number): Promise<ValidationResult> {
+    return this.send<ValidationResult>((id) => ({ id, type: 'validate', file, limit }));
   }
 
   stats(): Promise<DocumentStats> {

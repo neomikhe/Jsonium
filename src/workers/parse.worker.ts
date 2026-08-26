@@ -14,6 +14,7 @@ import { search } from '../core/search';
 import { serialize } from '../core/serialize';
 import { computeStats } from '../core/stats';
 import { summarize } from '../core/summary';
+import { validateSchema } from '../core/validate-schema';
 import type { NodeId, NodeSummary, ParseResult } from '../core/types';
 
 interface WorkerScope {
@@ -34,6 +35,7 @@ type DiffRequest = Extract<WorkerRequest, { type: 'diff' }>;
 type ConvertRequest = Extract<WorkerRequest, { type: 'convert' }>;
 type QueryRequest = Extract<WorkerRequest, { type: 'query' }>;
 type ImportRequest = Extract<WorkerRequest, { type: 'importFile' }>;
+type ValidateRequest = Extract<WorkerRequest, { type: 'validate' }>;
 
 // lib.dom no describe el scope de un worker: se acota a lo que realmente usamos
 const scope = globalThis as unknown as WorkerScope;
@@ -82,6 +84,12 @@ async function runImport(request: ImportRequest): Promise<ParseResult> {
   const text = await request.file.text();
   const { fromFormat } = await import('../core/convert-run');
   return adoptMain(fromFormat(text, request.format), request.file.size);
+}
+
+async function runValidate(request: ValidateRequest): Promise<ReturnType<typeof validateSchema>> {
+  const document = requireMain();
+  const schema: unknown = JSON.parse(await request.file.text());
+  return validateSchema(document, schema, request.limit);
 }
 
 function parseCompare(text: string, sizeBytes: number): CompareResult {
@@ -195,6 +203,8 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'query', result: runQuery(request) };
     case 'inferSchema':
       return { id, ok: true, type: 'inferSchema', result: inferSchema(requireMain()) };
+    case 'validate':
+      return { id, ok: true, type: 'validate', result: await runValidate(request) };
     case 'stats':
       return { id, ok: true, type: 'stats', result: computeStats(requireMain()) };
   }

@@ -25,6 +25,7 @@ import { useQuery } from './lib/use-query';
 import { useSearch } from './lib/use-search';
 import { useShortcuts } from './lib/use-shortcuts';
 import { useTabs } from './lib/use-tabs';
+import { useValidate } from './lib/use-validate';
 
 export function App() {
   const { client, status, openFile, applyText } = useDocument();
@@ -40,6 +41,7 @@ export function App() {
   const diffState = useDiff(client, status);
   const convertState = useConvert(client, status, mode === 'convert');
   const queryState = useQuery(client, status.state === 'ready');
+  const validateState = useValidate(client, status);
 
   useEffect(() => {
     setStats(null);
@@ -185,6 +187,7 @@ export function App() {
             diff={diffState}
             convert={convertState}
             query={queryState}
+            validate={validateState}
             mode={mode}
             onModeChange={setMode}
             actions={{

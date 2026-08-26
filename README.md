@@ -97,6 +97,9 @@ or a general-purpose "everything" toolbox.
   `$[0:5]`. Filters like `[?(@.price < 10)]` are deliberately not supported yet — that is the part
   most implementations solve with `eval`
 - **Document statistics**: node count, max depth, and a histogram of value types
+- **Validate against a JSON Schema** you drop in, with every failure pointing at its exact path.
+  Written here rather than with ajv, which compiles every schema through `new Function` and so cannot
+  run under this CSP. `$ref` is not resolved
 - **Infer a JSON Schema** (draft-07) from the document: array elements merge into one `items`, and a
   key counts as required only when every sibling object has it
 - **Convert to YAML, TOML or CSV** — and it tells you what each format silently loses: TOML has no
@@ -126,7 +129,8 @@ tab — and the tree becomes the way to navigate the document.
 | 3 | v0.1.0 release | next |
 | 4 | JSONPath playground | ✅ done |
 | 4 | JSON Schema inference | ✅ done |
-| 4 | jq (WASM), JSON Schema validation | planned |
+| 4 | JSON Schema validation | ✅ done |
+| 4 | jq (WASM) | planned |
 | 5 | Type generation (TypeScript, Go, Rust, Python…), mocks, URL sharing via `#fragment` | planned |
 
 ## Getting started
@@ -244,6 +248,9 @@ de 5 MB no se guarda nada.
   `[?(@.precio < 10)]` no están soportados a propósito: son la parte que casi todas las
   implementaciones resuelven con `eval`
 - **Estadísticas**: número de nodos, profundidad máxima e histograma de tipos
+- **Validar contra un JSON Schema** que sueltes, con cada incumplimiento apuntando a su ruta exacta.
+  Está escrito aquí y no con ajv, que compila cada esquema con `new Function` y por tanto no puede
+  ejecutarse bajo esta CSP. `$ref` no se resuelve
 - **Inferir un JSON Schema** (draft-07) del documento: los elementos de un array se fusionan en un
   solo `items`, y una clave solo cuenta como requerida si la tienen todos los objetos hermanos
 - **Convertir a YAML, TOML o CSV**, avisando de lo que cada formato pierde en silencio: TOML no

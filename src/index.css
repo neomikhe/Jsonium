@@ -937,3 +937,8 @@ body {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+.notice--ok {
+  color: var(--kind-string);
+  font-weight: 600;
+}

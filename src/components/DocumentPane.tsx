@@ -2,6 +2,7 @@ import type { ConvertOutput } from '../core/convert';
 import type { OutputFormat } from '../lib/use-convert';
 import type { DiffResult } from '../core/diff';
 import type { QueryResult } from '../core/jsonpath';
+import type { ValidationResult } from '../core/validate-schema';
 import type { SearchResult } from '../core/search';
 import type { NodeId, NodeSummary } from '../core/types';
 import type { TreeRow } from '../lib/tree-rows';
@@ -12,8 +13,9 @@ import { DropZone } from './DropZone';
 import { QueryPanel } from './QueryPanel';
 import { JsonTree } from './JsonTree';
 import { SearchPanel } from './SearchPanel';
+import { ValidatePanel } from './ValidatePanel';
 
-export type PaneMode = 'tree' | 'query' | 'diff' | 'convert';
+export type PaneMode = 'tree' | 'query' | 'diff' | 'convert' | 'validate';
 
 export interface SearchBinding {
   query: string;
@@ -50,6 +52,15 @@ export interface QueryBinding {
   setExpression: (expression: string) => void;
 }
 
+export interface ValidateBinding {
+  schemaName: string | null;
+  result: ValidationResult | null;
+  error: string | null;
+  isRunning: boolean;
+  loadSchema: (file: File) => void;
+  clear: () => void;
+}
+
 export interface NodeActionBinding {
   onToggle: (node: NodeSummary) => void;
   onCopyPath: (node: NodeSummary) => void;
@@ -66,6 +77,7 @@ interface DocumentPaneProps {
   diff: DiffBinding;
   convert: ConvertBinding;
   query: QueryBinding;
+  validate: ValidateBinding;
   actions: NodeActionBinding;
   mode: PaneMode;
   onModeChange: (mode: PaneMode) => void;
@@ -76,7 +88,7 @@ interface DocumentPaneProps {
 }
 
 export function DocumentPane(props: DocumentPaneProps) {
-  const { status, rows, expanded, search, diff, convert, query, actions, mode } = props;
+  const { status, rows, expanded, search, diff, convert, query, validate, actions, mode } = props;
   const { onModeChange, onFile, onRevealPath, onExportDiff, onDownload } = props;
 
   if (status.state === 'empty') return <DropZone onFile={onFile} />;
@@ -96,7 +108,20 @@ export function DocumentPane(props: DocumentPaneProps) {
         <ModeButton mode="query" current={mode} label="Consultar" onSelect={onModeChange} />
         <ModeButton mode="diff" current={mode} label="Diff" onSelect={onModeChange} />
         <ModeButton mode="convert" current={mode} label="Convertir" onSelect={onModeChange} />
+        <ModeButton mode="validate" current={mode} label="Validar" onSelect={onModeChange} />
       </div>
+
+      {mode === 'validate' && (
+        <ValidatePanel
+          schemaName={validate.schemaName}
+          result={validate.result}
+          error={validate.error}
+          isRunning={validate.isRunning}
+          onFile={validate.loadSchema}
+          onClear={validate.clear}
+          onReveal={onRevealPath}
+        />
+      )}
 
       {mode === 'query' && (
         <QueryPanel
