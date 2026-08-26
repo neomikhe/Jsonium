@@ -42,6 +42,8 @@ export interface ConvertBinding {
   error: string | null;
   isRunning: boolean;
   setFormat: (format: OutputFormat) => void;
+  mockCount: number;
+  setMockCount: (count: number) => void;
 }
 
 export interface QueryBinding {
@@ -145,6 +147,8 @@ export function DocumentPane(props: DocumentPaneProps) {
             actions.onCopyText(text, 'Conversion copiada al portapapeles');
           }}
           onDownload={onDownload}
+          mockCount={convert.mockCount}
+          onMockCountChange={convert.setMockCount}
         />
       )}
 

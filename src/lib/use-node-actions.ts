@@ -9,6 +9,7 @@ interface NodeActions {
   copyPath: (node: NodeSummary) => void;
   copyValue: (node: NodeSummary) => void;
   copyText: (text: string, message: string) => void;
+  notify: (message: string) => void;
 }
 
 export function useNodeActions(client: DocumentClient): NodeActions {
@@ -42,5 +43,5 @@ export function useNodeActions(client: DocumentClient): NodeActions {
     [client, copy, notify],
   );
 
-  return { hint, copyPath, copyValue, copyText: copy };
+  return { hint, copyPath, copyValue, copyText: copy, notify };
 }

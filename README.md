@@ -36,7 +36,7 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **75.3 kB** |
+| Initial bundle (gzip) | **77.3 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
@@ -97,6 +97,12 @@ or a general-purpose "everything" toolbox.
   `$[0:5]`. Filters like `[?(@.price < 10)]` are deliberately not supported yet — that is the part
   most implementations solve with `eval`
 - **Document statistics**: node count, max depth, and a histogram of value types
+- **Generate mock data** shaped like your document: keys named `email`, `city`, `price` or
+  `createdAt` get plausible values, and generated emails use the reserved `example.invalid` domain so
+  a mock can never point at a real address. Deterministic, so the same document gives the same mock
+- **Share a document by link.** The compressed document rides in the URL fragment, which browsers
+  never send to a server: opening a shared link restores it without the payload ever leaving the
+  browser. Verified against the Resource Timing API, not just claimed
 - **Generate types** for TypeScript, Go, Python and Rust from the document. Optionals map to each
   language properly: `?`, `Option<T>`, `| None`, and a Go pointer with `omitempty`
 - **Validate against a JSON Schema** you drop in, with every failure pointing at its exact path.
@@ -134,7 +140,8 @@ tab — and the tree becomes the way to navigate the document.
 | 4 | JSON Schema validation | ✅ done |
 | 4 | jq (WASM) | planned |
 | 5 | Type generation (TypeScript, Go, Python, Rust) | ✅ done |
-| 5 | Mocks, URL sharing via `#fragment` | planned |
+| 5 | URL sharing via `#fragment` | ✅ done |
+| 5 | Mock data generation | ✅ done |
 
 ## Getting started
 
@@ -212,7 +219,7 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **75,3 kB** |
+| Bundle inicial (gzip) | **77,3 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
@@ -251,6 +258,12 @@ de 5 MB no se guarda nada.
   `[?(@.precio < 10)]` no están soportados a propósito: son la parte que casi todas las
   implementaciones resuelven con `eval`
 - **Estadísticas**: número de nodos, profundidad máxima e histograma de tipos
+- **Generar datos de prueba** con la forma de tu documento: las claves `email`, `city`, `price` o
+  `createdAt` reciben valores plausibles, y los correos usan el dominio reservado `example.invalid`
+  para que un mock no pueda apuntar a una dirección real. Determinista: mismo documento, mismo mock
+- **Compartir un documento por enlace.** El documento comprimido viaja en el fragmento de la URL,
+  que los navegadores no envían al servidor: abrir un enlace lo restaura sin que el contenido salga
+  del navegador. Comprobado con la API de Resource Timing, no solo afirmado
 - **Generar tipos** para TypeScript, Go, Python y Rust a partir del documento. Los opcionales se
   traducen bien a cada lenguaje: `?`, `Option<T>`, `| None`, y puntero con `omitempty` en Go
 - **Validar contra un JSON Schema** que sueltes, con cada incumplimiento apuntando a su ruta exacta.

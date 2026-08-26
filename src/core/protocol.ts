@@ -28,6 +28,7 @@ export type WorkerRequest =
   | { id: number; type: 'inferSchema' }
   | { id: number; type: 'validate'; file: File; limit: number }
   | { id: number; type: 'codegen'; language: Language }
+  | { id: number; type: 'mock'; count: number }
   | { id: number; type: 'stats' };
 
 export interface CompareResult {
@@ -52,6 +53,7 @@ export type WorkerResponse =
   | { id: number; ok: true; type: 'inferSchema'; result: InferResult }
   | { id: number; ok: true; type: 'validate'; result: ValidationResult }
   | { id: number; ok: true; type: 'codegen'; result: string }
+  | { id: number; ok: true; type: 'mock'; result: string }
   | { id: number; ok: true; type: 'stats'; result: DocumentStats }
   | { id: number; ok: false; error: string };
 
@@ -74,6 +76,7 @@ const REQUEST_TYPES: ReadonlySet<string> = new Set<RequestType>([
   'inferSchema',
   'validate',
   'codegen',
+  'mock',
   'stats',
 ]);
 

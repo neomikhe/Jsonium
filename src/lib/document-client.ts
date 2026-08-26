@@ -100,6 +100,10 @@ export class DocumentClient {
     return this.send<string>((id) => ({ id, type: 'codegen', language }));
   }
 
+  mock(count: number): Promise<string> {
+    return this.send<string>((id) => ({ id, type: 'mock', count }));
+  }
+
   stats(): Promise<DocumentStats> {
     return this.send<DocumentStats>((id) => ({ id, type: 'stats' }));
   }

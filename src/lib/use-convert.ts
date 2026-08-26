@@ -3,11 +3,11 @@ import type { Language } from '../core/codegen';
 import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import { messageOf } from '../core/error-message';
 import type { InferResult } from '../core/infer-schema';
-import { INDENT_SPACES } from '../core/limits';
+import { INDENT_SPACES, MOCK_DEFAULT_COUNT, MOCK_MAX_COUNT } from '../core/limits';
 import type { DocumentClient } from './document-client';
 import type { DocumentStatus } from './use-document';
 
-export type OutputFormat = ConvertFormat | 'schema' | Language;
+export type OutputFormat = ConvertFormat | 'schema' | 'mock' | Language;
 
 const LANGUAGES: ReadonlySet<string> = new Set<Language>([
   'typescript',
@@ -21,6 +21,7 @@ const EXTENSIONS: Record<string, string> = {
   toml: 'toml',
   csv: 'csv',
   schema: 'schema.json',
+  mock: 'mock.json',
   typescript: 'ts',
   go: 'go',
   python: 'py',
@@ -37,6 +38,8 @@ interface ConvertState {
   error: string | null;
   isRunning: boolean;
   setFormat: (format: OutputFormat) => void;
+  mockCount: number;
+  setMockCount: (count: number) => void;
 }
 
 export function useConvert(
@@ -48,12 +51,13 @@ export function useConvert(
   const [output, setOutput] = useState<ConvertOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [mockCount, setCount] = useState(MOCK_DEFAULT_COUNT);
 
   const isReady = status.state === 'ready';
 
   const run = useCallback(() => {
     setIsRunning(true);
-    void produce(client, format)
+    void produce(client, format, mockCount)
       .then((result) => {
         setOutput(result);
         setError(null);
@@ -65,18 +69,27 @@ export function useConvert(
       .finally(() => {
         setIsRunning(false);
       });
-  }, [client, format]);
+  }, [client, format, mockCount]);
 
   useEffect(() => {
     if (!isActive || !isReady) return;
     run();
   }, [isActive, isReady, status, run]);
 
-  return { format, output, error, isRunning, setFormat };
+  const setMockCount = useCallback((count: number) => {
+    setCount(Math.max(1, Math.min(MOCK_MAX_COUNT, count)));
+  }, []);
+
+  return { format, output, error, isRunning, setFormat, mockCount, setMockCount };
 }
 
-function produce(client: DocumentClient, format: OutputFormat): Promise<ConvertOutput> {
+function produce(
+  client: DocumentClient,
+  format: OutputFormat,
+  mockCount: number,
+): Promise<ConvertOutput> {
   if (format === 'schema') return client.inferSchema().then(toSchemaOutput);
+  if (format === 'mock') return client.mock(mockCount).then(toPlainOutput);
   if (LANGUAGES.has(format)) return client.codegen(format as Language).then(toPlainOutput);
   return client.convert(format as ConvertFormat);
 }

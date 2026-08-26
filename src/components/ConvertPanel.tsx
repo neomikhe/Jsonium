@@ -3,13 +3,14 @@ import type { OutputFormat } from '../lib/use-convert';
 import { CONVERT_PREVIEW_CHARS } from '../core/limits';
 import { formatCount } from '../lib/format';
 
-const DATA_FORMATS: readonly OutputFormat[] = ['yaml', 'toml', 'csv', 'schema'];
+const DATA_FORMATS: readonly OutputFormat[] = ['yaml', 'toml', 'csv', 'schema', 'mock'];
 const CODE_FORMATS: readonly OutputFormat[] = ['typescript', 'go', 'python', 'rust'];
 const LABELS: Record<string, string> = {
   yaml: 'YAML',
   toml: 'TOML',
   csv: 'CSV',
   schema: 'SCHEMA',
+  mock: 'MOCK',
   typescript: 'TS',
   go: 'Go',
   python: 'Python',
@@ -24,55 +25,67 @@ interface ConvertPanelProps {
   onFormatChange: (format: OutputFormat) => void;
   onCopy: (text: string) => void;
   onDownload: (text: string, format: OutputFormat) => void;
+  mockCount: number;
+  onMockCountChange: (count: number) => void;
 }
 
 export function ConvertPanel(props: ConvertPanelProps) {
-  const { format, output, error, isRunning, onFormatChange, onCopy, onDownload } = props;
+  const { output, error, isRunning } = props;
 
   return (
     <>
-      <div className="convert__bar">
-        {[...DATA_FORMATS, ...CODE_FORMATS].map((candidate) => (
-          <button
-            key={candidate}
-            type="button"
-            className={candidate === format ? 'modes__button modes__button--active' : 'modes__button'}
-            onClick={() => {
-              onFormatChange(candidate);
-            }}
-          >
-            {LABELS[candidate] ?? candidate}
-          </button>
-        ))}
-        {output !== null && (
-          <button
-            type="button"
-            className="convert__copy"
-            onClick={() => {
-              onCopy(output.text);
-            }}
-          >
-            Copiar
-          </button>
-        )}
-        {output !== null && output.text !== '' && (
-          <button
-            type="button"
-            className="convert__copy"
-            onClick={() => {
-              onDownload(output.text, format);
-            }}
-          >
-            Descargar
-          </button>
-        )}
-      </div>
-
+      <ConvertBar {...props} />
       {error !== null && <p className="notice notice--error">{error}</p>}
       {isRunning && <p className="notice">Convirtiendo...</p>}
       {needsFailureNotice(output) && <p className="notice notice--error">{output?.failure}</p>}
       {output !== null && !isRunning && <ConvertOutputView output={output} />}
     </>
+  );
+}
+
+function ConvertBar(props: ConvertPanelProps) {
+  const { format, output, onFormatChange, onCopy, onDownload, mockCount, onMockCountChange } =
+    props;
+  const text = output?.text ?? '';
+
+  return (
+    <div className="convert__bar">
+      {[...DATA_FORMATS, ...CODE_FORMATS].map((candidate) => (
+        <button
+          key={candidate}
+          type="button"
+          className={candidate === format ? 'modes__button modes__button--active' : 'modes__button'}
+          onClick={() => {
+            onFormatChange(candidate);
+          }}
+        >
+          {LABELS[candidate] ?? candidate}
+        </button>
+      ))}
+      {format === 'mock' && <MockCount value={mockCount} onChange={onMockCountChange} />}
+      {text !== '' && (
+        <>
+          <button
+            type="button"
+            className="convert__copy"
+            onClick={() => {
+              onCopy(text);
+            }}
+          >
+            Copiar
+          </button>
+          <button
+            type="button"
+            className="convert__copy"
+            onClick={() => {
+              onDownload(text, format);
+            }}
+          >
+            Descargar
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -108,5 +121,21 @@ function ConvertOutputView({ output }: { output: ConvertOutput }) {
 
       {output.text !== '' && <pre className="convert__output">{preview}</pre>}
     </>
+  );
+}
+
+function MockCount({ value, onChange }: { value: number; onChange: (count: number) => void }) {
+  return (
+    <label className="diff__key">
+      cuantos
+      <input
+        type="number"
+        min={1}
+        value={value}
+        onChange={(event) => {
+          onChange(Number(event.target.value));
+        }}
+      />
+    </label>
   );
 }

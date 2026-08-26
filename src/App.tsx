@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DocumentPane } from './components/DocumentPane';
 import type { PaneMode } from './components/DocumentPane';
 import { DropZone } from './components/DropZone';
@@ -16,6 +16,7 @@ import type { Span } from './core/locate';
 import type { DocumentStats, NodeSummary } from './core/types';
 import { formatBytes } from './lib/format';
 import { downloadText } from './lib/download';
+import { decodeShare, encodeShare } from './lib/share-url';
 import { useDocument } from './lib/use-document';
 import { useEditorText } from './lib/use-editor-text';
 import { useJsonTree } from './lib/use-json-tree';
@@ -34,10 +35,11 @@ export function App() {
   const { rows, expanded, toggle } = useJsonTree(client, root);
   const editor = useEditorText(client, status, applyText);
   const search = useSearch(client, status.state === 'ready');
-  const { hint, copyPath, copyValue, copyText } = useNodeActions(client);
+  const { hint, copyPath, copyValue, copyText, notify } = useNodeActions(client);
   const [stats, setStats] = useState<DocumentStats | null>(null);
   const tabs = useTabs(status, editor.text);
   const [reveal, setReveal] = useState<Span | null>(null);
+  const sharedRef = useRef(false);
   const [mode, setMode] = useState<PaneMode>('tree');
   const diffState = useDiff(client, status);
   const convertState = useConvert(client, status, mode === 'convert');
@@ -47,6 +49,15 @@ export function App() {
   useEffect(() => {
     setStats(null);
   }, [root]);
+
+  useEffect(() => {
+    if (sharedRef.current) return;
+    const shared = decodeShare(window.location.hash);
+    if (shared === null) return;
+    sharedRef.current = true;
+    editor.loadText(shared);
+    void applyText(shared, 'compartido.json');
+  }, [editor, applyText]);
 
   const requestStats = useCallback(() => {
     void client
@@ -78,6 +89,19 @@ export function App() {
   const sortKeys = useCallback(() => {
     if (canEdit) applyOptions({ indent: INDENT_SPACES, sortKeys: true });
   }, [canEdit, applyOptions]);
+
+  const share = useCallback(() => {
+    const { hash, reason } = encodeShare(editor.text);
+    if (hash === null) {
+      notify(reason ?? 'No se pudo compartir');
+      return;
+    }
+    const { origin, pathname } = window.location;
+    copyText(
+      `${origin}${pathname}${hash}`,
+      'Enlace copiado. El fragmento nunca llega al servidor.',
+    );
+  }, [editor.text, copyText, notify]);
 
   useShortcuts([
     { key: 'f', run: format },
@@ -146,7 +170,13 @@ export function App() {
         onClearAll={tabs.clearAll}
       />
 
-      <Toolbar isDisabled={!canEdit} onFormat={format} onMinify={minify} onSortKeys={sortKeys} />
+      <Toolbar
+        isDisabled={!canEdit}
+        onFormat={format}
+        onMinify={minify}
+        onSortKeys={sortKeys}
+        onShare={share}
+      />
 
       {status.state === 'ready' && (
         <StatusBar

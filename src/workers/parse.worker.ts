@@ -7,6 +7,8 @@ import { messageOf } from '../core/error-message';
 import { inferSchema } from '../core/infer-schema';
 import { queryPath } from '../core/jsonpath';
 import { COPY_MAX_CHARS, EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
+import { MOCK_SEED } from '../core/limits';
+import { generateMock } from '../core/mock';
 import { NodeRegistry } from '../core/node-registry';
 import { isWorkerRequest } from '../core/protocol';
 import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
@@ -38,6 +40,7 @@ type QueryRequest = Extract<WorkerRequest, { type: 'query' }>;
 type ImportRequest = Extract<WorkerRequest, { type: 'importFile' }>;
 type ValidateRequest = Extract<WorkerRequest, { type: 'validate' }>;
 type CodegenRequest = Extract<WorkerRequest, { type: 'codegen' }>;
+type MockRequest = Extract<WorkerRequest, { type: 'mock' }>;
 
 // lib.dom no describe el scope de un worker: se acota a lo que realmente usamos
 const scope = globalThis as unknown as WorkerScope;
@@ -96,6 +99,12 @@ async function runValidate(request: ValidateRequest): Promise<ReturnType<typeof 
 
 function runCodegen(request: CodegenRequest): string {
   return generateTypes(inferSchema(requireMain()).schema, request.language);
+}
+
+function runMock(request: MockRequest): string {
+  const schema = inferSchema(requireMain()).schema;
+  const mock = generateMock(schema, { count: request.count, seed: MOCK_SEED });
+  return JSON.stringify(mock, null, INDENT_SPACES);
 }
 
 function parseCompare(text: string, sizeBytes: number): CompareResult {
@@ -213,6 +222,8 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'validate', result: await runValidate(request) };
     case 'codegen':
       return { id, ok: true, type: 'codegen', result: runCodegen(request) };
+    case 'mock':
+      return { id, ok: true, type: 'mock', result: runMock(request) };
     case 'stats':
       return { id, ok: true, type: 'stats', result: computeStats(requireMain()) };
   }
