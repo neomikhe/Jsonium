@@ -61,6 +61,7 @@ export interface Messages {
   collapse: string;
   showInEditor: string;
   showInTree: string;
+  hiddenSiblings: (count: string) => string;
   path: string;
   value: string;
 
@@ -182,6 +183,7 @@ const ES: Messages = {
   collapse: 'Contraer',
   showInEditor: 'Mostrar en el editor',
   showInTree: 'Mostrar en el arbol',
+  hiddenSiblings: (count) => `${count} mas`,
   path: 'ruta',
   value: 'valor',
 
@@ -365,6 +367,7 @@ const EN: Messages = {
   collapse: 'Collapse',
   showInEditor: 'Show in the editor',
   showInTree: 'Show in the tree',
+  hiddenSiblings: (count) => `${count} more`,
   path: 'path',
   value: 'value',
 

@@ -38,7 +38,8 @@ export function App() {
   const { theme, next: nextTheme, cycle: cycleTheme } = useTheme();
   const { client, status, openFile, applyText } = useDocument();
   const root = status.state === 'ready' ? status.result.root : null;
-  const { rows, expanded, focused, toggle, revealPath: revealInTree } = useJsonTree(client, root);
+  const tree = useJsonTree(client, root);
+  const { rows, expanded, focused, toggle, turnPage, revealPath: revealInTree } = tree;
   const editor = useEditorText(client, status, applyText);
   const search = useSearch(client, status.state === 'ready');
   const { hint, copyPath, copyValue, copyText, notify } = useNodeActions(client);
@@ -244,6 +245,7 @@ export function App() {
                 onCopyText: copyText,
                 onReveal: revealNode,
                 onRevealInTree: revealInTreeAndClearSearch,
+                onTurnPage: turnPage,
               }}
               onFile={handleFile}
               onRevealPath={revealPath}

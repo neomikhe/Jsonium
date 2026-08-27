@@ -36,7 +36,7 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **82.5 kB** |
+| Initial bundle (gzip) | **82.9 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
@@ -88,7 +88,8 @@ or a general-purpose "everything" toolbox.
 - **Repair near-valid JSON** — trailing commas, single and smart quotes, unquoted keys,
   `//` and `/* */` comments, and `True` / `False` / `None` / `NaN` / `undefined` — with a
   breakdown of every fix applied
-- **Virtualized tree** with lazy expansion, paged 200 children at a time
+- **Virtualized tree** with lazy expansion, paged 200 children at a time — and it says so: a level
+  holding 40,000 items shows `↑ 39,800 more` and `↓ 200 more` where the rest are, one click apart
 - **Copy the JSONPath or the value** of any node
 - **Click a node to reveal it in the editor** — it selects the exact span, in formatted or minified
   text alike
@@ -226,7 +227,7 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **82,5 kB** |
+| Bundle inicial (gzip) | **82,9 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
@@ -256,7 +257,8 @@ de 5 MB no se guarda nada.
 - **Reparar JSON casi válido**: comas finales, comillas simples y tipográficas, claves sin comillas,
   comentarios `//` y `/* */`, y `True` / `False` / `None` / `NaN` / `undefined`, con el desglose de
   cada corrección aplicada
-- **Árbol virtualizado** con expansión perezosa, paginado de 200 hijos
+- **Árbol virtualizado** con expansión perezosa, paginado de 200 hijos — y lo dice: un nivel con
+  40.000 elementos muestra `↑ 39.800 más` y `↓ 200 más` donde está el resto, a un clic
 - **Copiar la ruta JSONPath o el valor** de cualquier nodo
 - **Pulsar un nodo para verlo en el editor**: selecciona el fragmento exacto, tanto en texto
   formateado como minificado

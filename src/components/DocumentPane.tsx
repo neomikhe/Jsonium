@@ -5,7 +5,7 @@ import type { QueryResult } from '../core/jsonpath';
 import type { ValidationResult } from '../core/validate-schema';
 import type { SearchResult } from '../core/search';
 import type { NodeId, NodeSummary } from '../core/types';
-import type { TreeRow } from '../lib/tree-rows';
+import type { GapDirection, TreeRow } from '../lib/tree-rows';
 import type { DocumentStatus } from '../lib/use-document';
 import { useMessages } from '../lib/i18n';
 import { PANE_MODES } from '../lib/pane-mode';
@@ -78,6 +78,7 @@ export interface NodeActionBinding {
   onCopyText: (text: string, message: string) => void;
   onReveal: (node: NodeSummary) => void;
   onRevealInTree: (path: string) => void;
+  onTurnPage: (parent: NodeSummary, direction: GapDirection) => void;
 }
 
 interface DocumentPaneProps {
@@ -211,10 +212,7 @@ function TreeView({ tree, search, actions }: TreeViewProps) {
           rows={tree.rows}
           expanded={tree.expanded}
           focused={tree.focused}
-          onToggle={actions.onToggle}
-          onCopyPath={actions.onCopyPath}
-          onCopyValue={actions.onCopyValue}
-          onReveal={actions.onReveal}
+          actions={actions}
         />
       ) : (
         <SearchPanel

@@ -1,11 +1,11 @@
 import type { NodeSummary } from '../core/types';
 import { useMessages } from '../lib/i18n';
-import type { TreeRow as Row } from '../lib/tree-rows';
+import type { NodeRow } from '../lib/tree-rows';
 
 const INDENT_PX = 14;
 
 interface TreeRowProps {
-  row: Row;
+  row: NodeRow;
   isExpanded: boolean;
   isFocused: boolean;
   onToggle: (node: NodeSummary) => void;

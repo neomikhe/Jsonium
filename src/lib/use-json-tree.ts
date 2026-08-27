@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CHILDREN_PAGE_SIZE } from '../core/limits';
 import type { NodeId, NodeSummary } from '../core/types';
 import type { TrailStep } from '../core/trail';
 import type { DocumentClient } from './document-client';
 import { flattenRows } from './tree-rows';
-import type { TreeRow } from './tree-rows';
+import type { GapDirection, LoadedPage, TreeRow } from './tree-rows';
 
-type Pages = ReadonlyMap<NodeId, NodeSummary[]>;
+type Pages = ReadonlyMap<NodeId, LoadedPage>;
 
 interface JsonTreeState {
   rows: TreeRow[];
@@ -14,27 +14,26 @@ interface JsonTreeState {
   focused: NodeId | null;
   toggle: (node: NodeSummary) => void;
   revealPath: (path: string) => Promise<boolean>;
+  turnPage: (parent: NodeSummary, direction: GapDirection) => void;
 }
 
 export function useJsonTree(client: DocumentClient, root: NodeSummary | null): JsonTreeState {
   const [expanded, setExpanded] = useState<ReadonlySet<NodeId>>(() => new Set<NodeId>());
-  const [children, setChildren] = useState<Pages>(() => new Map());
+  const [pages, setPages] = useState<Pages>(() => new Map());
   const [focused, setFocused] = useState<NodeId | null>(null);
-  const childrenRef = useRef<Pages>(children);
-  childrenRef.current = children;
 
   useEffect(() => {
     setExpanded(new Set<NodeId>());
-    setChildren(new Map());
+    setPages(new Map());
     setFocused(null);
   }, [root]);
 
-  const loadChildren = useCallback(
-    (node: NodeSummary) => {
+  const loadPage = useCallback(
+    (node: NodeSummary, offset: number) => {
       void client
-        .children(node.id, 0, CHILDREN_PAGE_SIZE)
-        .then((page) => {
-          setChildren((current) => new Map(current).set(node.id, page));
+        .children(node.id, offset, CHILDREN_PAGE_SIZE)
+        .then((items) => {
+          setPages((current) => new Map(current).set(node.id, { offset, items }));
         })
         .catch(() => {
           setExpanded((current) => toggleId(current, node.id));
@@ -48,9 +47,19 @@ export function useJsonTree(client: DocumentClient, root: NodeSummary | null): J
       const willExpand = !expanded.has(node.id);
       setExpanded((current) => toggleId(current, node.id));
       setFocused(null);
-      if (willExpand && node.childCount > 0 && !children.has(node.id)) loadChildren(node);
+      if (willExpand && node.childCount > 0 && !pages.has(node.id)) loadPage(node, 0);
     },
-    [expanded, children, loadChildren],
+    [expanded, pages, loadPage],
+  );
+
+  const turnPage = useCallback(
+    (parent: NodeSummary, direction: GapDirection) => {
+      const current = pages.get(parent.id);
+      if (current === undefined) return;
+      setFocused(null);
+      loadPage(parent, nextOffset(current, direction));
+    },
+    [pages, loadPage],
   );
 
   const revealPath = useCallback(
@@ -59,7 +68,7 @@ export function useJsonTree(client: DocumentClient, root: NodeSummary | null): J
       if (steps === null) return false;
       const target = targetOf(steps, root);
       if (target === null) return false;
-      setChildren((current) => absorb(current, steps));
+      setPages((current) => absorb(current, steps));
       setExpanded((current) => new Set([...current, ...steps.map((step) => step.parentId)]));
       setFocused(target);
       return true;
@@ -67,8 +76,13 @@ export function useJsonTree(client: DocumentClient, root: NodeSummary | null): J
     [client, root],
   );
 
-  const rows = useMemo(() => flattenRows(root, expanded, children), [root, expanded, children]);
-  return { rows, expanded, focused, toggle, revealPath };
+  const rows = useMemo(() => flattenRows(root, expanded, pages), [root, expanded, pages]);
+  return { rows, expanded, focused, toggle, revealPath, turnPage };
+}
+
+function nextOffset(page: LoadedPage, direction: GapDirection): number {
+  if (direction === 'before') return Math.max(0, page.offset - CHILDREN_PAGE_SIZE);
+  return page.offset + page.items.length;
 }
 
 function targetOf(steps: readonly TrailStep[], root: NodeSummary | null): NodeId | null {
@@ -77,7 +91,7 @@ function targetOf(steps: readonly TrailStep[], root: NodeSummary | null): NodeId
 
 function absorb(current: Pages, steps: readonly TrailStep[]): Pages {
   const next = new Map(current);
-  for (const step of steps) next.set(step.parentId, step.children);
+  for (const step of steps) next.set(step.parentId, { offset: step.offset, items: step.children });
   return next;
 }
 
