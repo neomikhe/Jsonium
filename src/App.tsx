@@ -19,6 +19,8 @@ import { downloadText } from './lib/download';
 import { decodeShare, encodeShare } from './lib/share-url';
 import { MessagesContext } from './lib/i18n';
 import { useLocale } from './lib/use-locale';
+import { useTheme } from './lib/use-theme';
+import { Preferences } from './components/Preferences';
 import { useDocument } from './lib/use-document';
 import { useEditorText } from './lib/use-editor-text';
 import { useJsonTree } from './lib/use-json-tree';
@@ -33,6 +35,7 @@ import { useValidate } from './lib/use-validate';
 
 export function App() {
   const { messages, toggle: toggleLocale } = useLocale();
+  const { theme, next: nextTheme, cycle: cycleTheme } = useTheme();
   const { client, status, openFile, applyText } = useDocument();
   const root = status.state === 'ready' ? status.result.root : null;
   const { rows, expanded, toggle } = useJsonTree(client, root);
@@ -161,14 +164,12 @@ export function App() {
           <h1 className="app__title">Jsonium</h1>
           <p className="app__tagline">{messages.tagline}</p>
           <DropZone onFile={handleFile} isCompact />
-          <button
-            type="button"
-            className="app__locale"
-            title={messages.switchLanguage}
-            onClick={toggleLocale}
-          >
-            {messages.language}
-          </button>
+          <Preferences
+            theme={theme}
+            nextTheme={nextTheme}
+            onCycleTheme={cycleTheme}
+            onSwitchLanguage={toggleLocale}
+          />
         </header>
 
         <Tabs

@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 import type { JsonKind } from '../core/types';
 import type { LossKind } from '../core/convert';
 import type { PaneMode } from './pane-mode';
+import type { Theme } from './use-theme';
 import type { FailureCode } from '../core/failure';
 import type { RepairKind } from '../core/repair';
 import type { ShareFailure } from './share-url';
@@ -109,6 +110,8 @@ export interface Messages {
   shareFailure: Record<ShareFailure, string>;
   language: string;
   switchLanguage: string;
+  themeName: Record<Theme, string>;
+  switchTheme: (next: string) => string;
   sharedName: string;
 }
 
@@ -287,6 +290,8 @@ const ES: Messages = {
   },
   language: 'ES',
   switchLanguage: 'Cambiar a ingles',
+  themeName: { system: 'del sistema', light: 'claro', dark: 'oscuro' },
+  switchTheme: (next) => `Cambiar al tema ${next}`,
   sharedName: 'compartido.json',
 };
 
@@ -463,6 +468,8 @@ const EN: Messages = {
   },
   language: 'EN',
   switchLanguage: 'Switch to Spanish',
+  themeName: { system: 'system', light: 'light', dark: 'dark' },
+  switchTheme: (next) => `Switch to the ${next} theme`,
   sharedName: 'shared.json',
 };
 
