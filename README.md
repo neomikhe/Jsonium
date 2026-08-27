@@ -26,11 +26,14 @@ Reproduce them yourself with `npm run bench` — the fixture generator is in `be
 
 | Operation | Chrome (Web Worker) | Node 24 |
 | --- | ---: | ---: |
-| `JSON.parse` of 100 MB | **300–347 ms** | 789 ms |
-| Full document scan (6.4 M nodes) | **384 ms** | 294 ms |
-| Text search across 100 MB (200 hits) | **32 ms** | — |
+| `JSON.parse` of 100 MB | **500–700 ms** | 810–980 ms |
+| Full document scan (6.4 M nodes) | **400–410 ms** | 285–330 ms |
+| Text search across 100 MB (200 hits) | **11–28 ms** | — |
 | First tree render | instant (virtualized) | — |
 | Heap after parse | — | 285 MB |
+
+Ranges are four runs on one ordinary laptop, not a best case: the numbers move by a third
+depending on what else the machine is doing. The document is 6,402,451 nodes, 6 levels deep.
 
 Other numbers that matter:
 
@@ -39,7 +42,7 @@ Other numbers that matter:
 | Initial bundle (gzip) | **82.9 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
-| DOM nodes for a 256,098-item array | ~35 |
+| DOM nodes for a 256,098-item array | ~30 |
 
 ## Privacy, concretely
 
@@ -221,18 +224,21 @@ Reprodúcelo con `npm run bench`.
 
 | Operación | Chrome (Web Worker) | Node 24 |
 | --- | ---: | ---: |
-| `JSON.parse` de 100 MB | **300–347 ms** | 789 ms |
-| Recorrido completo (6,4 M nodos) | **384 ms** | 294 ms |
-| Búsqueda de texto en 100 MB (200 aciertos) | **32 ms** | — |
+| `JSON.parse` de 100 MB | **500–700 ms** | 810–980 ms |
+| Recorrido completo (6,4 M nodos) | **400–410 ms** | 285–330 ms |
+| Búsqueda de texto en 100 MB (200 aciertos) | **11–28 ms** | — |
 | Primer render del árbol | instantáneo (virtualizado) | — |
 | Heap tras el parse | — | 285 MB |
+
+Los rangos son cuatro ejecuciones en un portátil corriente, no el mejor caso: las cifras se mueven
+un tercio según lo que esté haciendo la máquina. El documento tiene 6.402.451 nodos y 6 niveles.
 
 | Métrica | Valor |
 | --- | ---: |
 | Bundle inicial (gzip) | **82,9 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
-| Nodos del DOM para un array de 256.098 elementos | ~35 |
+| Nodos del DOM para un array de 256.098 elementos | ~30 |
 
 ## Privacidad, en concreto
 
