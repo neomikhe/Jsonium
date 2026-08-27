@@ -190,9 +190,18 @@ function clearCompare(): null {
   return null;
 }
 
-function requireNode(nodeId: NodeId): unknown {
+function guardNode(nodeId: NodeId): void {
   if (!registry.has(nodeId)) throw new DocumentFailure('node-unknown', nodeId.toString());
+}
+
+function requireNode(nodeId: NodeId): unknown {
+  guardNode(nodeId);
   return registry.read(nodeId);
+}
+
+function nodePath(nodeId: NodeId): string {
+  guardNode(nodeId);
+  return registry.pathOf(nodeId);
 }
 
 function requireMain(): unknown {
@@ -239,7 +248,7 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
     case 'repair':
       return { id, ok: true, type: 'repair', result: repair(request.text) };
     case 'path':
-      return { id, ok: true, type: 'path', result: registry.pathOf(request.nodeId) };
+      return { id, ok: true, type: 'path', result: nodePath(request.nodeId) };
     case 'value':
       return { id, ok: true, type: 'value', result: serializeNode(request.nodeId) };
     case 'search':
