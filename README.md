@@ -36,7 +36,7 @@ Other numbers that matter:
 
 | Metric | Value |
 | --- | ---: |
-| Initial bundle (gzip) | **81.8 kB** |
+| Initial bundle (gzip) | **82.5 kB** |
 | Editor chunk (gzip, loaded lazily) | 102.7 kB |
 | Network requests after load | **0** |
 | DOM nodes for a 256,098-item array | ~35 |
@@ -93,6 +93,9 @@ or a general-purpose "everything" toolbox.
 - **Click a node to reveal it in the editor** — it selects the exact span, in formatted or minified
   text alike
 - **Search** keys and values across the whole document, with JSONPath results
+- **Click a result to land on it in the tree.** The worker works out which page of children holds
+  the node, so it reaches element 39,999 of an array as directly as element 3 — which matters above
+  5 MB, where the editor steps aside and the tree is the only way to navigate
 - **JSONPath queries** with live results and an examples gallery: `$..price`, `$.store.book[*].author`,
   `$[0:5]`. Filters like `[?(@.price < 10)]` are deliberately not supported yet — that is the part
   most implementations solve with `eval`
@@ -223,7 +226,7 @@ Reprodúcelo con `npm run bench`.
 
 | Métrica | Valor |
 | --- | ---: |
-| Bundle inicial (gzip) | **81,8 kB** |
+| Bundle inicial (gzip) | **82,5 kB** |
 | Chunk del editor (gzip, carga perezosa) | 102,7 kB |
 | Peticiones de red tras la carga | **0** |
 | Nodos del DOM para un array de 256.098 elementos | ~35 |
@@ -258,6 +261,9 @@ de 5 MB no se guarda nada.
 - **Pulsar un nodo para verlo en el editor**: selecciona el fragmento exacto, tanto en texto
   formateado como minificado
 - **Buscar** por clave y valor en todo el documento, con las rutas de cada coincidencia
+- **Pulsa un resultado y aterrizas en el nodo dentro del árbol.** El worker calcula qué página de
+  hijos lo contiene, así que llega al elemento 39.999 de un array igual de directo que al 3 — que es
+  lo que importa por encima de 5 MB, cuando el editor se aparta y el árbol es la única navegación
 - **Consultas JSONPath** con resultados en vivo y galería de ejemplos. Los filtros tipo
   `[?(@.precio < 10)]` no están soportados a propósito: son la parte que casi todas las
   implementaciones resuelven con `eval`

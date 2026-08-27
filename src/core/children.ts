@@ -27,3 +27,13 @@ function recordChildren(
     .slice(offset, offset + limit)
     .map((key) => ({ key, index: null, value: value[key] }));
 }
+
+export function positionOf(value: unknown, key: string | null, index: number | null): number {
+  if (Array.isArray(value)) return isWithin(value.length, index) ? (index as number) : -1;
+  if (isPlainRecord(value) && key !== null) return Object.keys(value).indexOf(key);
+  return -1;
+}
+
+function isWithin(length: number, index: number | null): boolean {
+  return index !== null && index >= 0 && index < length;
+}

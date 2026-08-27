@@ -10,10 +10,13 @@ interface SearchPanelProps {
   error: string | null;
   isSearching: boolean;
   onCopyPath: (path: string) => void;
+  onRevealInTree: (path: string) => void;
 }
 
-export function SearchPanel({ query, result, error, isSearching, onCopyPath }: SearchPanelProps) {
+export function SearchPanel(props: SearchPanelProps) {
+  const { query, result, error, isSearching, onCopyPath, onRevealInTree } = props;
   const messages = useMessages();
+
   if (error !== null) {
     return <p className="notice notice--error">{describeFailure(messages, error)}</p>;
   }
@@ -30,19 +33,30 @@ export function SearchPanel({ query, result, error, isSearching, onCopyPath }: S
       </p>
       <VList className="tree" role="list" aria-label={messages.searchResults}>
         {result.matches.map((match) => (
-          <button
-            key={`${match.path}:${match.where}`}
-            type="button"
-            className="hit"
-            onClick={() => {
-              onCopyPath(match.path);
-            }}
-            title={messages.copyPathTitle}
-          >
-            <span className={`hit__where hit__where--${match.where}`}>{match.where}</span>
-            <span className="hit__path">{match.path}</span>
-            <span className="hit__preview">{match.preview}</span>
-          </button>
+          <div key={`${match.path}:${match.where}`} className="hit">
+            <button
+              type="button"
+              className="hit__open"
+              title={messages.showInTree}
+              onClick={() => {
+                onRevealInTree(match.path);
+              }}
+            >
+              <span className={`hit__where hit__where--${match.where}`}>{match.where}</span>
+              <span className="hit__path">{match.path}</span>
+              <span className="hit__preview">{match.preview}</span>
+            </button>
+            <button
+              type="button"
+              className="hit__copy"
+              title={messages.copyPathTitle}
+              onClick={() => {
+                onCopyPath(match.path);
+              }}
+            >
+              {messages.path}
+            </button>
+          </div>
         ))}
       </VList>
     </>

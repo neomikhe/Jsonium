@@ -10,6 +10,7 @@ import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/proto
 import type { RepairResult } from '../core/repair';
 import type { SearchResult } from '../core/search';
 import type { SerializeOptions } from '../core/serialize';
+import type { TrailStep } from '../core/trail';
 import type { DocumentStats, NodeId, NodeSummary, ParseResult } from '../core/types';
 import ParseWorker from '../workers/parse.worker?worker';
 
@@ -55,6 +56,10 @@ export class DocumentClient {
 
   children(nodeId: NodeId, offset: number, limit: number): Promise<NodeSummary[]> {
     return this.send<NodeSummary[]>((id) => ({ id, type: 'children', nodeId, offset, limit }));
+  }
+
+  trail(path: string): Promise<TrailStep[] | null> {
+    return this.send<TrailStep[] | null>((id) => ({ id, type: 'trail', path }));
   }
 
   serialize(options: SerializeOptions): Promise<string> {

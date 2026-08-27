@@ -65,18 +65,24 @@ export interface ValidateBinding {
   clear: () => void;
 }
 
+export interface TreeBinding {
+  rows: readonly TreeRow[];
+  expanded: ReadonlySet<NodeId>;
+  focused: NodeId | null;
+}
+
 export interface NodeActionBinding {
   onToggle: (node: NodeSummary) => void;
   onCopyPath: (node: NodeSummary) => void;
   onCopyValue: (node: NodeSummary) => void;
   onCopyText: (text: string, message: string) => void;
   onReveal: (node: NodeSummary) => void;
+  onRevealInTree: (path: string) => void;
 }
 
 interface DocumentPaneProps {
   status: DocumentStatus;
-  rows: readonly TreeRow[];
-  expanded: ReadonlySet<NodeId>;
+  tree: TreeBinding;
   search: SearchBinding;
   diff: DiffBinding;
   convert: ConvertBinding;
@@ -92,7 +98,7 @@ interface DocumentPaneProps {
 }
 
 export function DocumentPane(props: DocumentPaneProps) {
-  const { status, rows, expanded, search, diff, convert, query, validate, actions, mode } = props;
+  const { status, tree, search, diff, convert, query, validate, actions, mode } = props;
   const { onModeChange, onFile, onRevealPath, onExportDiff, onDownload } = props;
   const messages = useMessages();
 
@@ -174,21 +180,18 @@ export function DocumentPane(props: DocumentPaneProps) {
         />
       )}
 
-      {mode === 'tree' && (
-        <TreeView rows={rows} expanded={expanded} search={search} actions={actions} />
-      )}
+      {mode === 'tree' && <TreeView tree={tree} search={search} actions={actions} />}
     </>
   );
 }
 
 interface TreeViewProps {
-  rows: readonly TreeRow[];
-  expanded: ReadonlySet<NodeId>;
+  tree: TreeBinding;
   search: SearchBinding;
   actions: NodeActionBinding;
 }
 
-function TreeView({ rows, expanded, search, actions }: TreeViewProps) {
+function TreeView({ tree, search, actions }: TreeViewProps) {
   const messages = useMessages();
 
   return (
@@ -205,8 +208,9 @@ function TreeView({ rows, expanded, search, actions }: TreeViewProps) {
       />
       {search.query.trim() === '' ? (
         <JsonTree
-          rows={rows}
-          expanded={expanded}
+          rows={tree.rows}
+          expanded={tree.expanded}
+          focused={tree.focused}
           onToggle={actions.onToggle}
           onCopyPath={actions.onCopyPath}
           onCopyValue={actions.onCopyValue}
@@ -221,6 +225,7 @@ function TreeView({ rows, expanded, search, actions }: TreeViewProps) {
           onCopyPath={(path) => {
             actions.onCopyText(path, messages.pathCopied);
           }}
+          onRevealInTree={actions.onRevealInTree}
         />
       )}
     </>

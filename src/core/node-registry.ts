@@ -10,12 +10,18 @@ export interface RegisteredNode {
 
 export class NodeRegistry {
   private readonly nodes = new Map<NodeId, RegisteredNode>();
+  private readonly bySlot = new Map<string, NodeId>();
   private nextId: NodeId = 0;
 
   register(node: RegisteredNode): NodeId {
+    const slot = slotOf(node);
+    const known = slot === null ? undefined : this.bySlot.get(slot);
+    if (known !== undefined) return known;
+
     const id = this.nextId;
     this.nextId += 1;
     this.nodes.set(id, node);
+    if (slot !== null) this.bySlot.set(slot, id);
     return id;
   }
 
@@ -39,6 +45,13 @@ export class NodeRegistry {
 
   clear(): void {
     this.nodes.clear();
+    this.bySlot.clear();
     this.nextId = 0;
   }
+}
+
+function slotOf(node: RegisteredNode): string | null {
+  if (node.parentId === null) return null;
+  const own = node.index === null ? `k${node.key ?? ''}` : `i${node.index.toString()}`;
+  return `${node.parentId.toString()}:${own}`;
 }

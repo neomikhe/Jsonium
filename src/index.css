@@ -480,22 +480,56 @@ body {
 .hit {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   width: 100%;
   height: var(--row-height);
-  padding: 0 var(--space);
-  border: 0;
-  background: none;
   color: var(--text);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: inherit;
-  text-align: left;
   white-space: nowrap;
 }
 
 .hit:hover {
   background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.hit__open {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  flex: 1;
+  height: 100%;
+  padding: 0 var(--space);
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+}
+
+.hit__copy {
+  visibility: hidden;
+  flex-shrink: 0;
+  margin-right: var(--space);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  padding: 0 0.4rem;
+}
+
+.hit:hover .hit__copy,
+.hit__copy:focus-visible {
+  visibility: visible;
+}
+
+.hit__open:focus-visible,
+.hit__copy:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .hit__where {
@@ -965,4 +999,9 @@ body {
 .notice--ok {
   color: var(--kind-string);
   font-weight: 600;
+}
+
+.row--focused {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
 }

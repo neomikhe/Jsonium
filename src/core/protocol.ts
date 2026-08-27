@@ -7,12 +7,14 @@ import type { ValidationResult } from './validate-schema';
 import type { RepairResult } from './repair';
 import type { SearchResult } from './search';
 import type { SerializeOptions } from './serialize';
+import type { TrailStep } from './trail';
 import type { DocumentStats, NodeId, NodeSummary, ParseResult } from './types';
 
 export type WorkerRequest =
   | { id: number; type: 'parseFile'; file: File }
   | { id: number; type: 'parseText'; text: string }
   | { id: number; type: 'children'; nodeId: NodeId; offset: number; limit: number }
+  | { id: number; type: 'trail'; path: string }
   | { id: number; type: 'serialize'; options: SerializeOptions }
   | { id: number; type: 'repair'; text: string }
   | { id: number; type: 'path'; nodeId: NodeId }
@@ -41,6 +43,7 @@ export type RequestType = WorkerRequest['type'];
 export type WorkerResponse =
   | { id: number; ok: true; type: 'parseFile' | 'parseText'; result: ParseResult }
   | { id: number; ok: true; type: 'children'; result: NodeSummary[] }
+  | { id: number; ok: true; type: 'trail'; result: TrailStep[] | null }
   | { id: number; ok: true; type: 'serialize' | 'path' | 'value'; result: string }
   | { id: number; ok: true; type: 'repair'; result: RepairResult }
   | { id: number; ok: true; type: 'search'; result: SearchResult }
@@ -61,6 +64,7 @@ const REQUEST_TYPES: ReadonlySet<string> = new Set<RequestType>([
   'parseFile',
   'parseText',
   'children',
+  'trail',
   'serialize',
   'repair',
   'path',

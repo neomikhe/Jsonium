@@ -60,6 +60,7 @@ export interface Messages {
   expand: string;
   collapse: string;
   showInEditor: string;
+  showInTree: string;
   path: string;
   value: string;
 
@@ -180,6 +181,7 @@ const ES: Messages = {
   expand: 'Expandir',
   collapse: 'Contraer',
   showInEditor: 'Mostrar en el editor',
+  showInTree: 'Mostrar en el arbol',
   path: 'ruta',
   value: 'valor',
 
@@ -362,6 +364,7 @@ const EN: Messages = {
   expand: 'Expand',
   collapse: 'Collapse',
   showInEditor: 'Show in the editor',
+  showInTree: 'Show in the tree',
   path: 'path',
   value: 'value',
 

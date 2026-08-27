@@ -7,10 +7,17 @@ import { messageOf } from '../core/error-message';
 import { DocumentFailure } from '../core/failure';
 import { inferSchema } from '../core/infer-schema';
 import { queryPath } from '../core/jsonpath';
-import { COPY_MAX_CHARS, EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
+import {
+  CHILDREN_PAGE_SIZE,
+  COPY_MAX_CHARS,
+  EDITOR_MAX_BYTES,
+  INDENT_SPACES,
+} from '../core/limits';
 import { MOCK_SEED } from '../core/limits';
 import { generateMock } from '../core/mock';
 import { NodeRegistry } from '../core/node-registry';
+import { buildTrail } from '../core/trail';
+import type { TrailStep } from '../core/trail';
 import { isWorkerRequest } from '../core/protocol';
 import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import { repair } from '../core/repair';
@@ -33,6 +40,7 @@ interface Slot {
 }
 
 type ChildrenRequest = Extract<WorkerRequest, { type: 'children' }>;
+type TrailRequest = Extract<WorkerRequest, { type: 'trail' }>;
 type SerializeRequest = Extract<WorkerRequest, { type: 'serialize' }>;
 type SearchRequest = Extract<WorkerRequest, { type: 'search' }>;
 type DiffRequest = Extract<WorkerRequest, { type: 'diff' }>;
@@ -47,6 +55,7 @@ type MockRequest = Extract<WorkerRequest, { type: 'mock' }>;
 const scope = globalThis as unknown as WorkerScope;
 
 const registry = new NodeRegistry();
+let mainRootId: NodeId = 0;
 const main: Slot = { value: null, bytes: 0, isLoaded: false };
 const compare: Slot = { value: null, bytes: 0, isLoaded: false };
 
@@ -71,6 +80,7 @@ function adoptMain(value: unknown, sizeBytes: number): ParseResult {
   main.isLoaded = true;
   registry.clear();
   const rootId = registry.register({ value, parentId: null, key: null, index: null });
+  mainRootId = rootId;
   return {
     root: summarize({ key: null, index: null, value }, rootId),
     parseMs: 0,
@@ -129,6 +139,18 @@ function readChildren(request: ChildrenRequest): NodeSummary[] {
       }),
     ),
   );
+}
+
+function readTrail(request: TrailRequest): TrailStep[] | null {
+  return buildTrail(requireMain(), request.path, {
+    rootId: mainRootId,
+    pageSize: CHILDREN_PAGE_SIZE,
+    registerChild: (parentId, entry) =>
+      summarize(
+        entry,
+        registry.register({ value: entry.value, parentId, key: entry.key, index: entry.index }),
+      ),
+  });
 }
 
 function serializeDocument(request: SerializeRequest): string {
@@ -210,6 +232,8 @@ async function handleRequest(request: WorkerRequest): Promise<WorkerResponse> {
       return { id, ok: true, type: 'diff', result: runDiff(request) };
     case 'children':
       return { id, ok: true, type: 'children', result: readChildren(request) };
+    case 'trail':
+      return { id, ok: true, type: 'trail', result: readTrail(request) };
     case 'serialize':
       return { id, ok: true, type: 'serialize', result: serializeDocument(request) };
     case 'repair':

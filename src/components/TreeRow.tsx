@@ -7,6 +7,7 @@ const INDENT_PX = 14;
 interface TreeRowProps {
   row: Row;
   isExpanded: boolean;
+  isFocused: boolean;
   onToggle: (node: NodeSummary) => void;
   onCopyPath: (node: NodeSummary) => void;
   onCopyValue: (node: NodeSummary) => void;
@@ -14,17 +15,17 @@ interface TreeRowProps {
 }
 
 export function TreeRow(props: TreeRowProps) {
-  const { row, isExpanded, onToggle, onCopyPath, onCopyValue, onReveal } = props;
+  const { row, isExpanded, isFocused, onToggle, onCopyPath, onCopyValue, onReveal } = props;
   const messages = useMessages();
   const { node, depth } = row;
   const isBranch = node.childCount > 0;
 
   return (
     <div
-      className="row"
+      className={isFocused ? 'row row--focused' : 'row'}
       role="treeitem"
       aria-level={depth + 1}
-      aria-selected={false}
+      aria-selected={isFocused}
       aria-expanded={isBranch ? isExpanded : undefined}
       style={{ paddingLeft: `${(depth * INDENT_PX).toString()}px` }}
     >

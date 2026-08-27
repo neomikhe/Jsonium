@@ -38,7 +38,7 @@ export function App() {
   const { theme, next: nextTheme, cycle: cycleTheme } = useTheme();
   const { client, status, openFile, applyText } = useDocument();
   const root = status.state === 'ready' ? status.result.root : null;
-  const { rows, expanded, toggle } = useJsonTree(client, root);
+  const { rows, expanded, focused, toggle, revealPath: revealInTree } = useJsonTree(client, root);
   const editor = useEditorText(client, status, applyText);
   const search = useSearch(client, status.state === 'ready');
   const { hint, copyPath, copyValue, copyText, notify } = useNodeActions(client);
@@ -132,6 +132,15 @@ export function App() {
     [client, revealPath],
   );
 
+  const revealInTreeAndClearSearch = useCallback(
+    (path: string) => {
+      void revealInTree(path).then((found) => {
+        if (found) search.setQuery('');
+      });
+    },
+    [revealInTree, search],
+  );
+
   const exportDiff = useCallback((result: DiffResult) => {
     downloadText(JSON.stringify(result, null, INDENT_SPACES), 'jsonium-diff.json');
   }, []);
@@ -220,8 +229,7 @@ export function App() {
           <section className="pane">
             <DocumentPane
               status={status}
-              rows={rows}
-              expanded={expanded}
+              tree={{ rows, expanded, focused }}
               search={search}
               diff={diffState}
               convert={convertState}
@@ -235,6 +243,7 @@ export function App() {
                 onCopyValue: copyValue,
                 onCopyText: copyText,
                 onReveal: revealNode,
+                onRevealInTree: revealInTreeAndClearSearch,
               }}
               onFile={handleFile}
               onRevealPath={revealPath}
