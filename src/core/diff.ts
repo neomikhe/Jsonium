@@ -1,3 +1,4 @@
+import { identityOf } from './identity';
 import type { PathLink } from './json-path';
 import { pathFrom } from './json-path';
 import { isArrayValue, isPlainRecord, kindOf, previewOf } from './json-value';
@@ -90,7 +91,8 @@ function recordTasks(pair: Pair): Task[] {
 
   for (const key of leftKeys) {
     const link = keyLink(pair.link, key);
-    if (Object.hasOwn(right, key)) tasks.push({ pair: { left: left[key], right: right[key], link } });
+    if (Object.hasOwn(right, key))
+      tasks.push({ pair: { left: left[key], right: right[key], link } });
     else tasks.push({ change: removed(link, left[key]) });
   }
   for (const key of Object.keys(right)) {
@@ -144,18 +146,6 @@ function indexByKey(items: readonly unknown[], arrayKey: string): Map<string, un
     byKey.set(identityOf(item, arrayKey, index), item);
   });
   return byKey;
-}
-
-function identityOf(item: unknown, arrayKey: string, index: number): string {
-  const fallback = `#${index.toString()}`;
-  if (!isPlainRecord(item)) return fallback;
-  const value = item[arrayKey];
-  return isUsableId(value) ? String(value) : fallback;
-}
-
-function isUsableId(value: unknown): value is string | number | boolean {
-  const kind = kindOf(value);
-  return kind === 'string' || kind === 'number' || kind === 'boolean';
 }
 
 function keyLink(parent: PathLink | null, key: string): PathLink {

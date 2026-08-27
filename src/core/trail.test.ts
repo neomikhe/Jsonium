@@ -144,3 +144,45 @@ describe('buildTrail: el objetivo', () => {
     expect(last?.children.some((child) => child.id === last.targetId)).toBe(true);
   });
 });
+
+describe('buildTrail: rutas emparejadas por clave del diff', () => {
+  const doc = {
+    users: [
+      { id: 7, name: 'Ada' },
+      { id: 42, name: 'Grace' },
+      { name: 'sin id' },
+    ],
+  };
+
+  it('resuelve el token al indice real del elemento', () => {
+    const trail = trailOf(doc, '$.users[id=42].name');
+    const last = trail?.at(-1);
+    expect(last?.children.find((child) => child.id === last.targetId)?.key).toBe('name');
+  });
+
+  it('el elemento emparejado no tiene por que ser el primero', () => {
+    const trail = trailOf(doc, '$.users[id=42]');
+    const last = trail?.at(-1);
+    expect(last?.children.find((child) => child.id === last.targetId)?.index).toBe(1);
+  });
+
+  it('el respaldo por indice del diff tambien resuelve', () => {
+    const trail = trailOf(doc, '$.users[id=#2].name');
+    const last = trail?.at(-1);
+    expect(last?.children.find((child) => child.id === last.targetId)?.key).toBe('name');
+  });
+
+  it('una identidad que no existe no inventa un nodo', () => {
+    expect(trailOf(doc, '$.users[id=999]')).toBeNull();
+  });
+
+  it('emparejar contra algo que no es un array no resuelve', () => {
+    expect(trailOf({ users: { id: 7 } }, '$.users[id=7]')).toBeNull();
+  });
+
+  it('el token resuelto respeta la paginacion', () => {
+    const wide = { rows: Array.from({ length: 40_000 }, (_, at) => ({ ref: `r${at.toString()}` })) };
+    const trail = trailOf(wide, '$.rows[ref=r39999]', PAGE);
+    expect(trail?.[1]?.offset).toBe(39_800);
+  });
+});

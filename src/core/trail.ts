@@ -1,5 +1,6 @@
 import { childrenOf, positionOf } from './children';
 import type { ChildEntry } from './children';
+import { identityOf } from './identity';
 import { segmentsOf } from './json-path';
 import type { PathSegment } from './json-path';
 import type { NodeId, NodeSummary } from './types';
@@ -32,7 +33,9 @@ export function buildTrail(root: unknown, path: string, context: TrailContext): 
   let value = root;
   let parentId = context.rootId;
 
-  for (const segment of segments) {
+  for (const raw of segments) {
+    const segment = settle(value, raw);
+    if (segment === null) return null;
     const page = pageFor(value, segment, context.pageSize);
     if (page === null) return null;
     const children = page.entries.map((entry) => context.registerChild(parentId, entry));
@@ -44,6 +47,14 @@ export function buildTrail(root: unknown, path: string, context: TrailContext): 
   }
 
   return steps;
+}
+
+function settle(value: unknown, segment: PathSegment): PathSegment | null {
+  const match = segment.match;
+  if (match === null) return segment;
+  if (!Array.isArray(value)) return null;
+  const at = value.findIndex((item, index) => identityOf(item, match.key, index) === match.identity);
+  return at === -1 ? null : { key: null, index: at, match: null };
 }
 
 function pageFor(value: unknown, segment: PathSegment, pageSize: number): TrailPage | null {

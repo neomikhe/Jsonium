@@ -68,8 +68,8 @@ describe('segmentsOf: lo que rechaza', () => {
     expect(segmentsOf('$.book[-1]')).toBeNull();
   });
 
-  it('la notacion de emparejado por clave del diff', () => {
-    expect(segmentsOf('$.users[id=2]')).toBeNull();
+  it('un token sin nombre de clave delante del igual', () => {
+    expect(segmentsOf('$.users[=2]')).toBeNull();
   });
 
   it('basura suelta entre segmentos', () => {
@@ -78,15 +78,44 @@ describe('segmentsOf: lo que rechaza', () => {
   });
 });
 
+describe('segmentsOf: el token de emparejado del diff', () => {
+  it('se reconoce como un emparejamiento, no como clave ni indice', () => {
+    const segments = segmentsOf('$.users[id=2]');
+    expect(segments?.[1]).toEqual({ key: null, index: null, match: { key: 'id', identity: '2' } });
+  });
+
+  it('la identidad puede ser texto', () => {
+    expect(segmentsOf('$.users[slug=ada-l]')?.[1]?.match).toEqual({ key: 'slug', identity: 'ada-l' });
+  });
+
+  it('el respaldo por indice del diff tambien se reconoce', () => {
+    expect(segmentsOf('$.users[id=#3]')?.[1]?.match?.identity).toBe('#3');
+  });
+
+  it('un igual dentro de la identidad no la parte', () => {
+    expect(segmentsOf('$.q[expr=a=b]')?.[1]?.match?.identity).toBe('a=b');
+  });
+
+  it('una clave entrecomillada con un igual dentro sigue siendo clave', () => {
+    expect(segmentsOf('$["a=b"]')?.[0]).toEqual({ key: 'a=b', index: null, match: null });
+  });
+});
+
 describe('segmentsOf: ida y vuelta con segmentOf', () => {
+  const plain = (key: string | null, index: number | null): PathSegment => ({
+    key,
+    index,
+    match: null,
+  });
+
   const cases: PathSegment[][] = [
-    [{ key: 'store', index: null }, { key: null, index: 0 }],
-    [{ key: 'c d', index: null }],
-    [{ key: 'a]b', index: null }],
-    [{ key: 'di"jo', index: null }],
-    [{ key: '', index: null }],
-    [{ key: '123', index: null }],
-    [{ key: 'año', index: null }, { key: null, index: 7 }],
+    [plain('store', null), plain(null, 0)],
+    [plain('c d', null)],
+    [plain('a]b', null)],
+    [plain('di"jo', null)],
+    [plain('', null)],
+    [plain('123', null)],
+    [plain('año', null), plain(null, 7)],
   ];
 
   it('toda ruta construida se vuelve a descomponer igual', () => {

@@ -119,7 +119,9 @@ or a general-purpose "everything" toolbox.
 - **Open YAML, TOML and CSV files** directly; they are converted to JSON on the way in
 - **Export the diff** as JSON, and click any change to jump to it in the editor
 - **Semantic diff** against a second document — arrays match by index, or by a key you name, so a
-  reordered list stops drowning the real changes
+  reordered list stops drowning the real changes. Three reordered users go from five phantom changes
+  to one real one, and clicking it selects the right element even though the key-matched path
+  (`$.users[id=42].city`) is not a position
 - **Works offline.** A service worker precaches the whole app, so it keeps running with the server
   unreachable — verified by killing the server and reloading
 - **Keyboard shortcuts**: Ctrl/Cmd + Shift + F, M and O for format, minify and sort keys
@@ -288,7 +290,9 @@ de 5 MB no se guarda nada.
 - **Abrir archivos YAML, TOML y CSV** directamente: se convierten a JSON al entrar
 - **Exportar el diff** como JSON, y pulsar cualquier cambio para saltar a él en el editor
 - **Diff semántico** contra un segundo documento: los arrays se emparejan por índice, o por la
-  clave que indiques, de modo que reordenar una lista deje de tapar los cambios reales
+  clave que indiques, de modo que reordenar una lista deje de tapar los cambios reales. Tres usuarios
+  reordenados pasan de cinco cambios fantasma a uno real, y pulsarlo selecciona el elemento correcto
+  aunque la ruta emparejada por clave (`$.users[id=42].city`) no sea una posición
 - **Funciona sin conexión.** Un service worker precachea la aplicación entera, así que sigue
   funcionando con el servidor caído: verificado apagándolo y recargando
 - **Atajos de teclado**: Ctrl/Cmd + Shift + F, M y O para formatear, minificar y ordenar claves

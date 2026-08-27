@@ -167,3 +167,42 @@ describe('cancelacion', () => {
     await expect(pending).rejects.not.toSatisfy(isCancelled);
   });
 });
+
+describe('concretePath', () => {
+  it('convierte una ruta con token en la ruta concreta del nodo', async () => {
+    const { client, worker } = clientWith();
+    const pending = client.concretePath('$.users[id=42]');
+
+    worker.reply({
+      id: 0,
+      ok: true,
+      type: 'trail',
+      result: [{ parentId: 0, offset: 0, children: [], targetId: 9 }],
+    });
+    await Promise.resolve();
+    worker.reply({ id: 1, ok: true, type: 'path', result: '$.users[1]' });
+
+    await expect(pending).resolves.toBe('$.users[1]');
+    expect(worker.sent[1]).toEqual({ id: 1, type: 'path', nodeId: 9 });
+  });
+
+  it('una ruta que el worker no resuelve no pide la ruta concreta', async () => {
+    const { client, worker } = clientWith();
+    const pending = client.concretePath('$.users[id=999]');
+
+    worker.reply({ id: 0, ok: true, type: 'trail', result: null });
+
+    await expect(pending).resolves.toBeNull();
+    expect(worker.sent).toHaveLength(1);
+  });
+
+  it('la raiz no tiene ultimo paso y no se resuelve', async () => {
+    const { client, worker } = clientWith();
+    const pending = client.concretePath('$');
+
+    worker.reply({ id: 0, ok: true, type: 'trail', result: [] });
+
+    await expect(pending).resolves.toBeNull();
+    expect(worker.sent).toHaveLength(1);
+  });
+});

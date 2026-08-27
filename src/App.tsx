@@ -116,9 +116,21 @@ export function App() {
   const revealPath = useCallback(
     (path: string) => {
       if (!editor.isEditable) return;
-      setReveal(locatePath(editor.text, path));
+      const direct = locatePath(editor.text, path);
+      if (direct !== null) {
+        setReveal(direct);
+        return;
+      }
+      void client
+        .concretePath(path)
+        .then((concrete) => {
+          setReveal(concrete === null ? null : locatePath(editor.text, concrete));
+        })
+        .catch(() => {
+          setReveal(null);
+        });
     },
-    [editor.isEditable, editor.text],
+    [client, editor.isEditable, editor.text],
   );
 
   const revealNode = useCallback(

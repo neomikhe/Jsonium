@@ -62,6 +62,12 @@ export class DocumentClient {
     return this.send<TrailStep[] | null>((id) => ({ id, type: 'trail', path }));
   }
 
+  async concretePath(path: string): Promise<string | null> {
+    const steps = await this.trail(path);
+    const target = steps?.at(-1)?.targetId;
+    return target === undefined ? null : this.path(target);
+  }
+
   serialize(options: SerializeOptions): Promise<string> {
     return this.send<string>((id) => ({ id, type: 'serialize', options }));
   }

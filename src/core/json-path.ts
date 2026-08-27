@@ -2,6 +2,7 @@ const SIMPLE_KEY = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 const BACKSLASH = '\\';
 const QUOTE = '"';
 const BREAKERS = '.[';
+const EQUALS = '=';
 
 export const ROOT_PATH = '$';
 
@@ -12,9 +13,15 @@ export interface PathLink {
   token?: string;
 }
 
+export interface KeyMatch {
+  key: string;
+  identity: string;
+}
+
 export interface PathSegment {
   key: string | null;
   index: number | null;
+  match: KeyMatch | null;
 }
 
 export function segmentOf(key: string | null, index: number | null): string {
@@ -61,7 +68,7 @@ class SegmentScanner {
       this.at += 1;
     }
     if (this.at === start) return false;
-    this.segments.push({ key: this.path.slice(start, this.at), index: null });
+    this.segments.push({ key: this.path.slice(start, this.at), index: null, match: null });
     return true;
   }
 
@@ -72,7 +79,8 @@ class SegmentScanner {
     if (close === -1) return false;
     const inner = this.path.slice(start, close);
     this.at = close + 1;
-    return inner.startsWith(QUOTE) ? this.pushQuoted(inner) : this.pushIndex(inner);
+    if (inner.startsWith(QUOTE)) return this.pushQuoted(inner);
+    return inner.includes(EQUALS) ? this.pushMatch(inner) : this.pushIndex(inner);
   }
 
   private endOfQuoted(start: number): number {
@@ -89,14 +97,22 @@ class SegmentScanner {
   private pushQuoted(inner: string): boolean {
     const key: unknown = safeParse(inner);
     if (typeof key !== 'string') return false;
-    this.segments.push({ key, index: null });
+    this.segments.push({ key, index: null, match: null });
+    return true;
+  }
+
+  private pushMatch(inner: string): boolean {
+    const at = inner.indexOf(EQUALS);
+    const key = inner.slice(0, at);
+    if (key === '') return false;
+    this.segments.push({ key: null, index: null, match: { key, identity: inner.slice(at + 1) } });
     return true;
   }
 
   private pushIndex(inner: string): boolean {
     const index = Number(inner);
     if (inner === '' || !Number.isInteger(index) || index < 0) return false;
-    this.segments.push({ key: null, index });
+    this.segments.push({ key: null, index, match: null });
     return true;
   }
 }
