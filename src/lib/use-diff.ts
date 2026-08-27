@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { DiffResult } from '../core/diff';
 import { messageOf } from '../core/error-message';
+import { isCancelled } from '../core/failure';
 import { DIFF_MAX_CHANGES } from '../core/limits';
 import type { DocumentClient } from './document-client';
 import type { DocumentStatus } from './use-document';
@@ -35,6 +36,7 @@ export function useDiff(client: DocumentClient, status: DocumentStatus): DiffSta
         setError(null);
       })
       .catch((cause: unknown) => {
+        if (isCancelled(cause)) return;
         setError(messageOf(cause));
         setResult(null);
       })
@@ -52,6 +54,7 @@ export function useDiff(client: DocumentClient, status: DocumentStatus): DiffSta
           setError(null);
         })
         .catch((cause: unknown) => {
+          if (isCancelled(cause)) return;
           setError(messageOf(cause));
         });
     },
@@ -67,6 +70,7 @@ export function useDiff(client: DocumentClient, status: DocumentStatus): DiffSta
         setError(null);
       })
       .catch((cause: unknown) => {
+        if (isCancelled(cause)) return;
         setError(messageOf(cause));
       });
   }, [client]);

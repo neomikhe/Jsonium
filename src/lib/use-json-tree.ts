@@ -21,9 +21,15 @@ export function useJsonTree(client: DocumentClient, root: NodeSummary | null): J
   }, [root]);
 
   const loadChildren = useCallback(
-    async (node: NodeSummary) => {
-      const page = await client.children(node.id, 0, CHILDREN_PAGE_SIZE);
-      setChildren((current) => new Map(current).set(node.id, page));
+    (node: NodeSummary) => {
+      void client
+        .children(node.id, 0, CHILDREN_PAGE_SIZE)
+        .then((page) => {
+          setChildren((current) => new Map(current).set(node.id, page));
+        })
+        .catch(() => {
+          setExpanded((current) => toggleId(current, node.id));
+        });
     },
     [client],
   );
@@ -32,7 +38,7 @@ export function useJsonTree(client: DocumentClient, root: NodeSummary | null): J
     (node: NodeSummary) => {
       const willExpand = !expanded.has(node.id);
       setExpanded((current) => toggleId(current, node.id));
-      if (willExpand && node.childCount > 0 && !children.has(node.id)) void loadChildren(node);
+      if (willExpand && node.childCount > 0 && !children.has(node.id)) loadChildren(node);
     },
     [expanded, children, loadChildren],
   );

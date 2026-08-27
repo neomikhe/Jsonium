@@ -4,6 +4,8 @@ import type { DiffOptions, DiffResult } from '../core/diff';
 import type { InferResult } from '../core/infer-schema';
 import type { QueryResult } from '../core/jsonpath';
 import type { ValidationResult } from '../core/validate-schema';
+import { DocumentFailure } from '../core/failure';
+import type { FailureCode } from '../core/failure';
 import type { CompareResult, WorkerRequest, WorkerResponse } from '../core/protocol';
 import type { RepairResult } from '../core/repair';
 import type { SearchResult } from '../core/search';
@@ -16,15 +18,30 @@ interface PendingCall {
   reject: (error: Error) => void;
 }
 
+export interface WorkerLike {
+  postMessage: (message: WorkerRequest) => void;
+  terminate: () => void;
+  onmessage: ((event: MessageEvent<WorkerResponse>) => void) | null;
+  onerror: ((event: unknown) => void) | null;
+  onmessageerror: ((event: unknown) => void) | null;
+}
+
 export class DocumentClient {
-  private readonly worker: Worker;
+  private readonly worker: WorkerLike;
   private readonly pending = new Map<number, PendingCall>();
   private nextId = 0;
+  private failure: FailureCode | null = null;
 
-  constructor() {
-    this.worker = new ParseWorker();
+  constructor(spawn: () => WorkerLike = () => new ParseWorker() as unknown as WorkerLike) {
+    this.worker = spawn();
     this.worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       this.settle(event.data);
+    };
+    this.worker.onerror = () => {
+      this.fail('worker-crashed');
+    };
+    this.worker.onmessageerror = () => {
+      this.fail('worker-crashed');
     };
   }
 
@@ -108,12 +125,24 @@ export class DocumentClient {
     return this.send<DocumentStats>((id) => ({ id, type: 'stats' }));
   }
 
+  get isUsable(): boolean {
+    return this.failure === null;
+  }
+
   dispose(): void {
+    this.fail('client-disposed');
+  }
+
+  private fail(cause: FailureCode): void {
+    this.failure ??= cause;
     this.worker.terminate();
+    const abandoned = [...this.pending.values()];
     this.pending.clear();
+    for (const call of abandoned) call.reject(new DocumentFailure(this.failure));
   }
 
   private send<T>(build: (id: number) => WorkerRequest): Promise<T> {
+    if (this.failure !== null) return Promise.reject(new DocumentFailure(this.failure));
     const id = this.nextId;
     this.nextId += 1;
     return new Promise<T>((resolve, reject) => {

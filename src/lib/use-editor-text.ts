@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { messageOf } from '../core/error-message';
+import { isCancelled } from '../core/failure';
 import { EDITOR_MAX_BYTES, INDENT_SPACES } from '../core/limits';
 import type { RepairFix } from '../core/repair';
 import type { SerializeOptions } from '../core/serialize';
@@ -42,6 +43,7 @@ export function useEditorText(
           if (options.sortKeys) await applyText(serialized);
         })
         .catch((cause: unknown) => {
+          if (isCancelled(cause)) return;
           setError(messageOf(cause));
         });
     },
@@ -58,6 +60,7 @@ export function useEditorText(
         setError(null);
       })
       .catch((cause: unknown) => {
+        if (isCancelled(cause)) return;
         setError(messageOf(cause));
       });
   }, [client, text, applyText]);
@@ -128,6 +131,7 @@ function schedule(
       setError(null);
     })
     .catch((cause: unknown) => {
+      if (isCancelled(cause)) return;
       setError(messageOf(cause));
     });
 }

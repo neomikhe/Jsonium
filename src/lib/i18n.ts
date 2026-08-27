@@ -247,6 +247,8 @@ const ES: Messages = {
   },
 
   failure: {
+    'worker-crashed': 'El motor del documento fallo. Vuelve a abrir el archivo',
+    'client-disposed': 'El documento se cerro mientras se trabajaba con el',
     'document-missing': 'No hay ningun documento cargado',
     'document-too-large': 'El documento es demasiado grande para volver al editor',
     'compare-missing': 'Falta el documento con el que comparar',
@@ -427,6 +429,8 @@ const EN: Messages = {
   },
 
   failure: {
+    'worker-crashed': 'The document engine failed. Open the file again',
+    'client-disposed': 'The document was closed while it was still working',
     'document-missing': 'No document is loaded',
     'document-too-large': 'The document is too large to bring back into the editor',
     'compare-missing': 'The document to compare against is missing',

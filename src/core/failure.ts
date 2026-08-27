@@ -1,4 +1,6 @@
 export const FAILURE_CODES = [
+  'worker-crashed',
+  'client-disposed',
   'document-missing',
   'document-too-large',
   'compare-missing',
@@ -43,4 +45,8 @@ export function readFailure(message: string): Failure | null {
   const code = at === -1 ? message : message.slice(0, at);
   if (!KNOWN.has(code)) return null;
   return { code: code as FailureCode, detail: at === -1 ? '' : message.slice(at + 1) };
+}
+
+export function isCancelled(cause: unknown): boolean {
+  return cause instanceof DocumentFailure && cause.code === 'client-disposed';
 }

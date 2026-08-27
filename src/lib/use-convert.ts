@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { Language } from '../core/codegen';
 import type { ConvertFormat, ConvertOutput } from '../core/convert';
 import { messageOf } from '../core/error-message';
+import { isCancelled } from '../core/failure';
 import { ROOT_PATH } from '../core/json-path';
 import type { InferResult } from '../core/infer-schema';
 import { INDENT_SPACES, MOCK_DEFAULT_COUNT, MOCK_MAX_COUNT } from '../core/limits';
@@ -10,12 +11,7 @@ import type { DocumentStatus } from './use-document';
 
 export type OutputFormat = ConvertFormat | 'schema' | 'mock' | Language;
 
-const LANGUAGES: ReadonlySet<string> = new Set<Language>([
-  'typescript',
-  'go',
-  'python',
-  'rust',
-]);
+const LANGUAGES: ReadonlySet<string> = new Set<Language>(['typescript', 'go', 'python', 'rust']);
 
 const EXTENSIONS: Record<string, string> = {
   yaml: 'yaml',
@@ -64,6 +60,7 @@ export function useConvert(
         setError(null);
       })
       .catch((cause: unknown) => {
+        if (isCancelled(cause)) return;
         setError(messageOf(cause));
         setOutput(null);
       })

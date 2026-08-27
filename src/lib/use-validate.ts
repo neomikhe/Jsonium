@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { messageOf } from '../core/error-message';
+import { isCancelled } from '../core/failure';
 import { VALIDATE_MAX_ERRORS } from '../core/limits';
 import type { ValidationResult } from '../core/validate-schema';
 import type { DocumentClient } from './document-client';
@@ -32,6 +33,7 @@ export function useValidate(client: DocumentClient, status: DocumentStatus): Val
         setError(null);
       })
       .catch((cause: unknown) => {
+        if (isCancelled(cause)) return;
         setError(messageOf(cause));
         setResult(null);
       })

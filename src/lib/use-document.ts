@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { messageOf } from '../core/error-message';
+import { isCancelled } from '../core/failure';
 import { formatOfFile } from '../core/file-format';
 import type { ParseResult } from '../core/types';
 import { DocumentClient } from './document-client';
@@ -15,16 +16,19 @@ export type DocumentStatus =
   | { state: 'failed'; name: string; error: string };
 
 export function useDocument() {
-  const client = useMemo(() => new DocumentClient(), []);
+  const [client, setClient] = useState(() => new DocumentClient());
   const [status, setStatus] = useState<DocumentStatus>({ state: 'empty' });
   const revisionRef = useRef(0);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    if (!client.isUsable) {
+      setClient(new DocumentClient());
+      return undefined;
+    }
+    return () => {
       client.dispose();
-    },
-    [client],
-  );
+    };
+  }, [client]);
 
   const openFile = useCallback(
     async (file: File) => {
@@ -42,6 +46,7 @@ export function useDocument() {
           result,
         });
       } catch (error) {
+        if (isCancelled(error)) return;
         setStatus({ state: 'failed', name: file.name, error: messageOf(error) });
       }
     },

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { messageOf } from '../core/error-message';
+import { isCancelled } from '../core/failure';
 import { SEARCH_MAX_RESULTS } from '../core/limits';
 import type { SearchResult } from '../core/search';
 import type { DocumentClient } from './document-client';
@@ -42,6 +43,7 @@ export function useSearch(client: DocumentClient, isReady: boolean): SearchState
           setError(null);
         })
         .catch((cause: unknown) => {
+          if (isCancelled(cause)) return;
           setError(messageOf(cause));
           setResult(null);
         })

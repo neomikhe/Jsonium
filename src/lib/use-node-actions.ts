@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { messageOf } from '../core/error-message';
+import { isCancelled } from '../core/failure';
 import type { NodeSummary } from '../core/types';
 import type { DocumentClient } from './document-client';
 import { describeFailure } from './describe-failure';
@@ -26,6 +27,7 @@ export function useNodeActions(client: DocumentClient): NodeActions {
           copy(path, messages.pathCopied);
         })
         .catch((cause: unknown) => {
+          if (isCancelled(cause)) return;
           notify(describeFailure(messages, messageOf(cause)));
         });
     },
@@ -40,6 +42,7 @@ export function useNodeActions(client: DocumentClient): NodeActions {
           copy(value, messages.valueCopied);
         })
         .catch((cause: unknown) => {
+          if (isCancelled(cause)) return;
           notify(describeFailure(messages, messageOf(cause)));
         });
     },
